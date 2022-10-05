@@ -1,3 +1,6 @@
 .ipynb_checkpoints
 .venv
 .DS_Store
+race_lines
+.vscode
+.idea
