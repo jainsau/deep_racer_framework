@@ -146,7 +146,7 @@ def get_point_at_bearing(start_point, bearing: float, distance: float):
 
 
 def get_intersection_of_two_lines(
-        line_a_point_1, line_a_point_2, line_b_point_1, line_b_point_2
+    line_a_point_1, line_a_point_2, line_b_point_1, line_b_point_2
 ):
     (x1, y1) = line_a_point_1
     (x2, y2) = line_a_point_2
@@ -239,8 +239,8 @@ def get_processed_waypoints(waypoints, track_width):
                 previous, w, future, 90, track_width / 2 + RealWorld.SAFE_CAR_OVERHANG
             )
             if (
-                    get_distance_between_points(previous_left, left_safe)
-                    < edge_error_tolerance
+                get_distance_between_points(previous_left, left_safe)
+                < edge_error_tolerance
             ):
                 left_safe = previous_left
 
@@ -248,8 +248,8 @@ def get_processed_waypoints(waypoints, track_width):
                 previous, w, future, -90, track_width / 2 + RealWorld.SAFE_CAR_OVERHANG
             )
             if (
-                    get_distance_between_points(previous_right, right_safe)
-                    < edge_error_tolerance
+                get_distance_between_points(previous_right, right_safe)
+                < edge_error_tolerance
             ):
                 right_safe = previous_right
 
@@ -428,10 +428,10 @@ class _Framework:  # CHANGE: Framework -> _Framework
         self.progress = float(params[ParamNames.PROGRESS])
         self.is_complete_lap = self.progress == 100.0
         self.is_final_step = (
-                self.is_complete_lap
-                or self.is_crashed
-                or self.is_off_track
-                or self.is_reversed
+            self.is_complete_lap
+            or self.is_crashed
+            or self.is_off_track
+            or self.is_reversed
         )
         if self.progress > 0:
             self.predicted_lap_time = round(
@@ -449,10 +449,10 @@ class _Framework:  # CHANGE: Framework -> _Framework
 
         self.is_steering_straight = abs(self.action_steering_angle) < 0.01
         self.is_steering_left = (
-                self.action_steering_angle > 0 and not self.is_steering_straight
+            self.action_steering_angle > 0 and not self.is_steering_straight
         )
         self.is_steering_right = (
-                self.action_steering_angle < 0 and not self.is_steering_straight
+            self.action_steering_angle < 0 and not self.is_steering_straight
         )
 
         self.heading = params[ParamNames.HEADING]
@@ -499,15 +499,15 @@ class _Framework:  # CHANGE: Framework -> _Framework
 
         if previous_step:
             if (
-                    previous_step.x != self.x or previous_step.y != self.y
+                previous_step.x != self.x or previous_step.y != self.y
             ):  # Otherwise, keep existing true_bearing
                 if self.progress - previous_step.progress >= 0.05:
                     self.true_bearing = get_bearing_between_points(
                         (previous_step.x, previous_step.y), (self.x, self.y)
                     )
             if (
-                    previous_step.action_speed == self.action_speed
-                    and previous_step.action_steering_angle == self.action_steering_angle
+                previous_step.action_speed == self.action_speed
+                and previous_step.action_steering_angle == self.action_steering_angle
             ):
                 self.action_sequence_length += 1
             else:
@@ -516,18 +516,18 @@ class _Framework:  # CHANGE: Framework -> _Framework
             speed_calculate_steps = self._history[-6:]
             speed_calculate_distance = sum(s.distance for s in speed_calculate_steps)
             speed_calculate_time = (
-                    len(speed_calculate_steps) / RealWorld.STEPS_PER_SECOND
+                len(speed_calculate_steps) / RealWorld.STEPS_PER_SECOND
             )
             self.track_speed = speed_calculate_distance / speed_calculate_time
 
             progress_speed_distance = (
-                    (self.progress - speed_calculate_steps[0].progress)
-                    / 100
-                    * self.track_length
+                (self.progress - speed_calculate_steps[0].progress)
+                / 100
+                * self.track_length
             )
             progress_speed_calculate_time = (
-                                                    len(speed_calculate_steps) - 1
-                                            ) / RealWorld.STEPS_PER_SECOND
+                len(speed_calculate_steps) - 1
+            ) / RealWorld.STEPS_PER_SECOND
             self.progress_speed = max(
                 0.0, progress_speed_distance / progress_speed_calculate_time
             )
@@ -562,7 +562,7 @@ class _Framework:  # CHANGE: Framework -> _Framework
             self.just_passed_waypoint_ids = []
             self.start_waypoint_id = self.closest_waypoint_id
             if (
-                    len(self.time_at_waypoint) > self.start_waypoint_id
+                len(self.time_at_waypoint) > self.start_waypoint_id
             ):  # FUDGE TO PASS VALIDATION IN CONSOLE
                 self.time_at_waypoint[self.start_waypoint_id] = self.time
             self.corner_cutting = 1
@@ -631,8 +631,8 @@ class _Framework:  # CHANGE: Framework -> _Framework
                 object_locations[self.front_object_id]
             )
             if (
-                    object_hit_distance is not None
-                    and object_hit_distance < self.projected_distance
+                object_hit_distance is not None
+                and object_hit_distance < self.projected_distance
             ):
                 self.projected_distance = object_hit_distance
                 self.projected_hit_object = True
@@ -644,8 +644,8 @@ class _Framework:  # CHANGE: Framework -> _Framework
                     object_locations[second_object_id]
                 )
                 if (
-                        second_object_hit_distance is not None
-                        and second_object_hit_distance < self.projected_distance
+                    second_object_hit_distance is not None
+                    and second_object_hit_distance < self.projected_distance
                 ):
                     self.projected_distance = second_object_hit_distance
 
@@ -671,8 +671,8 @@ class _Framework:  # CHANGE: Framework -> _Framework
 
         previous_waypoint = self.waypoints[self.previous_waypoint_id]
         for w in (
-                self.processed_waypoints[self.next_waypoint_id:]
-                + self.processed_waypoints[: self.next_waypoint_id]
+            self.processed_waypoints[self.next_waypoint_id :]
+            + self.processed_waypoints[: self.next_waypoint_id]
         ):
             (
                 off_track_distance,
@@ -709,7 +709,7 @@ class _Framework:  # CHANGE: Framework -> _Framework
 
                 if is_first_step:
                     progress_distance = (
-                            next_progress_distance - final_next_progress_distance
+                        next_progress_distance - final_next_progress_distance
                     )
                 else:
                     progress_distance += final_previous_progress_distance
@@ -717,7 +717,7 @@ class _Framework:  # CHANGE: Framework -> _Framework
 
     @staticmethod
     def _get_off_track_distance_and_point(
-            point, heading: float, previous_left, previous_right, processed_waypoint
+        point, heading: float, previous_left, previous_right, processed_waypoint
     ):
         left_safe = processed_waypoint.left_safe
         right_safe = processed_waypoint.right_safe
@@ -777,7 +777,7 @@ class _Framework:  # CHANGE: Framework -> _Framework
 
     @staticmethod
     def _calculate_progress_distances(
-            point, previous_waypoint, next_waypoint, is_left, distance_from_centre
+        point, previous_waypoint, next_waypoint, is_left, distance_from_centre
     ):
         track_bearing = get_bearing_between_points(previous_waypoint, next_waypoint)
 
@@ -807,7 +807,7 @@ class _Framework:  # CHANGE: Framework -> _Framework
         )  # Just some random distance (1m) to define line
         track_bearing = self._get_track_bearing_at_point(obj_middle)
         safe_border = (
-                min(RealWorld.VEHICLE_WIDTH, RealWorld.VEHICLE_LENGTH) / 3
+            min(RealWorld.VEHICLE_WIDTH, RealWorld.VEHICLE_LENGTH) / 3
         )  # Effectively enlarge the box
 
         front_middle = get_point_at_bearing(
@@ -850,7 +850,7 @@ class _Framework:  # CHANGE: Framework -> _Framework
                 point, point2, box_point1, box_point2
             )
             if hit_point is not None and is_point_between(
-                    hit_point, box_point1, box_point2
+                hit_point, box_point1, box_point2
             ):
                 # Make sure it's in front of us!
                 bearing_to_hit_point = get_bearing_between_points(point, hit_point)
@@ -882,7 +882,7 @@ class _Framework:  # CHANGE: Framework -> _Framework
         return closest_id
 
     def get_waypoint_ids_before_and_after(
-            self, point, closest_waypoint_id: int, prefer_forwards=False
+        self, point, closest_waypoint_id: int, prefer_forwards=False
     ):
         assert 0 <= closest_waypoint_id < len(self.waypoints)
 
@@ -898,7 +898,7 @@ class _Framework:  # CHANGE: Framework -> _Framework
             previous_ratio = 99999.0
         else:
             previous_ratio = (
-                    get_distance_between_points(point, previous_waypoint) / target_dist
+                get_distance_between_points(point, previous_waypoint) / target_dist
             )
 
         target_dist = get_distance_between_points(closest_waypoint, next_waypoint)
@@ -928,7 +928,7 @@ class _Framework:  # CHANGE: Framework -> _Framework
             return waypoint_id - 1
 
     def _get_just_passed_waypoint_ids(
-            self, previous_next_waypoint_id, current_next_waypoint_id
+        self, previous_next_waypoint_id, current_next_waypoint_id
     ):
         if previous_next_waypoint_id == current_next_waypoint_id:
             return []
@@ -970,9 +970,9 @@ class _Framework:  # CHANGE: Framework -> _Framework
             return None
 
         progress_speed_distance = (
-                (self.progress - self._history[-steps - 1].progress)
-                / 100
-                * self.track_length
+            (self.progress - self._history[-steps - 1].progress)
+            / 100
+            * self.track_length
         )
         progress_speed_calculate_time = steps / RealWorld.STEPS_PER_SECOND
         return max(0.0, progress_speed_distance / progress_speed_calculate_time)
@@ -1066,16 +1066,11 @@ class HistoricStep(_HistoricStep):
 class Framework(_Framework):
     def __init__(self, params):
         super().__init__(params)
-        global racepoints
         self.racepoints = racepoints
 
-    @staticmethod
-    def wrapper(f):
-        def wrapped(self, *args, **kwargs):
-            f(self, *args, **kwargs)
-            # TODO: plug code
-
-        return wrapped
+    def process_params(self, params):
+        super().process_params(params)
+        # TODO: plug code
 
 
 # -------------------------------------------------------------------------------
@@ -1140,7 +1135,7 @@ class Reward:
         optimal_speed = self.racepoints[self.closest_waypoint_id][2]
         sigma = (MAX_SPEED - MIN_SPEED) / 6
         reward = pow(
-            math.e, ((current_speed - optimal_speed) ** 2) / (2 * (sigma ** 2))
+            math.e, ((current_speed - optimal_speed) ** 2) / (2 * (sigma**2))
         )
         return reward
 
@@ -1157,11 +1152,11 @@ class Reward:
         reward = pow(
             math.e,
             -(
-                    (
-                            get_distance_between_points(self.current_position, optimal_position)
-                            ** 2
-                    )
-                    / (2 * (sigma ** 2))
+                (
+                    get_distance_between_points(self.current_position, optimal_position)
+                    ** 2
+                )
+                / (2 * (sigma**2))
             ),
         )
         return reward
@@ -1178,7 +1173,7 @@ class Reward:
         cone = get_turn_between_directions(current, required)
         reward = pow(
             math.e,
-            -((cone ** 2) / (2 * (sigma ** 2))),
+            -((cone**2) / (2 * (sigma**2))),
         )
         return reward
 
