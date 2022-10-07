@@ -1,4 +1,5 @@
 import copy
+from os import environ
 from pathlib import Path
 
 import numpy as np
@@ -110,7 +111,7 @@ def create(center_line, inner_border, outer_border, iterations=500):
 
 
 def get_path(perc_width, iterations):
-    filename = f"race-line-{iterations}-{perc_width}.npy"
+    filename = f'rogue_{environ.get("TRACK", "raceway")}-race-line-{iterations}-{perc_width}.npy'
     path = Path.cwd().joinpath("race_lines", filename)
     return path
 

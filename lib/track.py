@@ -1,3 +1,4 @@
+from os import environ
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -7,7 +8,8 @@ from lib.plot import print_borders
 
 
 def load_waypoints():
-    path = str(Path.cwd().joinpath("lib", "rogue_raceway.npy"))
+    name = environ.get("TRACK", "raceway")
+    path = str(Path.cwd().joinpath("lib/tracks", f"rogue_{name}.npy"))
     waypoints = np.load(path)
     return waypoints
 

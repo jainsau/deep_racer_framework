@@ -144,10 +144,26 @@ def time(track, speed_):
     return time_to_prev
 
 
-def everything(track, speed_, time_):
+def everything(track, speed_):
+    # also add track type
+    max_speed, min_speed = max(speed_), min(speed_)
+    sigma = (max_speed - min_speed) / 6
+    mean = (max_speed + min_speed) / 2
+
     race_track_everything = []
     for i in range(len(track)):
-        race_track_everything.append([track[i][0], track[i][1], speed_[i], time_[i]])
+        curr_step_speed = speed_[i]
+        is_track_straight = curr_step_speed >= mean + sigma
+        is_track_curved = curr_step_speed <= mean - sigma
+        race_track_everything.append(
+            [
+                track[i][0],
+                track[i][1],
+                curr_step_speed,
+                is_track_straight,
+                is_track_curved,
+            ]
+        )
 
     # Round to 5 decimals
     race_track_everything = np.around(race_track_everything, 5).tolist()
