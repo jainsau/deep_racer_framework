@@ -1054,9 +1054,39 @@ class _Framework:  # CHANGE: Framework -> _Framework
 
 # -------------------------------------------------------------------------------
 #
+# Generate optimal raceline and calculate corresponding speeds
+#
+# -------------------------------------------------------------------------------
+
+
+racepoints = [[-2.03762, -5.95555, 4.0, 0.07516]]  # replace: raceline
+
+
+# -------------------------------------------------------------------------------
+#
 # Framework overrides
 #
 # -------------------------------------------------------------------------------
+
+
+class ProcessedRacepoint:
+    def __init__(self, point, opt_speed, opt_step_time) -> None:
+        (self.x, self.y) = point
+        self.opt_speed = opt_speed
+        self.opt_step_time = opt_step_time
+
+
+def get_processed_racepoints(racepoints):
+    previous = racepoints[-2] if racepoints[0] == racepoints[-1] else racepoints[-1]
+
+    processed_racepoints = []
+    for i, w in enumerate(racepoints):
+        if previous != w:
+            previous = w
+
+        processed_racepoints.append(ProcessedRacepoint(w[:2], w[2], w[3]))
+
+    return processed_racepoints
 
 
 class HistoricStep(_HistoricStep):
@@ -1066,11 +1096,66 @@ class HistoricStep(_HistoricStep):
 class Framework(_Framework):
     def __init__(self, params):
         super().__init__(params)
-        self.racepoints = racepoints
+        self.racepoints = get_processed_racepoints(racepoints)
 
     def process_params(self, params):
         super().process_params(params)
-        # TODO: plug code
+        self.next_waypoint = self.processed_waypoints[self.next_waypoint_id]
+        self.current_position = (self.x, self.y)
+        self.closest_waypoint = self.processed_waypoints[self.closest_waypoint_id]
+        self.closest_racepoint = self.racepoints[self.closest_waypoint_id]
+        self.opt_speed = self.closest_racepoint.opt_speed
+        self.next_racepoint = self.racepoints[self.next_waypoint_id]
+        self.prev_racepoint = self.racepoints[self.previous_waypoint_id]
+        self.racetrack_bearing = get_bearing_between_points(
+            [self.prev_racepoint.x, self.prev_racepoint.y],
+            [self.next_racepoint.x, self.next_racepoint.y],
+        )
+        self.leftsafe_bearing = get_bearing_between_points(
+            self.current_position, self.next_waypoint.left_safe
+        )
+        self.rightsafe_bearing = get_bearing_between_points(
+            self.current_position, self.next_waypoint.right_safe
+        )
+        self.racetrack_skew = get_turn_between_directions(
+            self.racetrack_bearing, self.true_bearing
+        )
+
+    @property
+    def is_headed_out_of_lookahead_cone(self):
+        left_right_skew = abs(
+            get_turn_between_directions(self.leftsafe_bearing, self.rightsafe_bearing)
+        )
+        left_to_curr_skew = abs(
+            get_turn_between_directions(self.leftsafe_bearing, self.heading)
+        )
+        right_to_curr_skew = abs(
+            get_turn_between_directions(self.rightsafe_bearing, self.heading)
+        )
+
+        return (
+            left_to_curr_skew > left_right_skew or right_to_curr_skew > left_right_skew
+        )
+
+    @property
+    def is_steering_out_of_lookahead_cone(self):
+        left_right_skew = abs(
+            get_turn_between_directions(self.leftsafe_bearing, self.rightsafe_bearing)
+        )
+        left_to_curr_skew = abs(
+            get_turn_between_directions(
+                self.leftsafe_bearing, self.action_steering_angle
+            )
+        )
+        right_to_curr_skew = abs(
+            get_turn_between_directions(
+                self.rightsafe_bearing, self.action_steering_angle
+            )
+        )
+
+        return (
+            left_to_curr_skew > left_right_skew or right_to_curr_skew > left_right_skew
+        )
 
 
 # -------------------------------------------------------------------------------
@@ -1103,15 +1188,6 @@ framework_global = None
 
 # -------------------------------------------------------------------------------
 #
-# Generate optimal raceline and calculate corresponding speeds
-#
-# -------------------------------------------------------------------------------
-
-
-racepoints = [[-2.03762, -5.95555, 4.0, 0.07516]]  # replace: raceline
-
-# -------------------------------------------------------------------------------
-#
 # REWARD FUNCTION ... ... ... ...
 # #REF: https://blog.gofynd.com/how-we-broke-into-the-top-1-of-the-aws-deepracer-virtual-circuit-573ba46c275
 #
@@ -1124,15 +1200,14 @@ MAX_SPEED = 4.0  # replace: MAX_SPEED
 class Reward:
     def __init__(self, f: Framework) -> None:
         self.f = f
-        self.closest_waypoint_id = self.f.closest_waypoint_id
-        self.current_position = (self.f.x, self.f.y)
-        self.racepoints = self.f.racepoints
+        self.optimal_position = (self.f.closest_racepoint.x, self.f.closest_racepoint.y)
+        self.next_optimal_position = (self.f.next_racepoint.x, self.f.next_racepoint.y)
 
     @property
     def speed_reward(self):
         # TODO: decide between action speed and track speed
         current_speed = self.f.action_speed
-        optimal_speed = self.racepoints[self.closest_waypoint_id][2]
+        optimal_speed = self.f.opt_speed
         sigma = (MAX_SPEED - MIN_SPEED) / 6
         reward = pow(
             math.e, ((current_speed - optimal_speed) ** 2) / (2 * (sigma**2))
@@ -1141,19 +1216,20 @@ class Reward:
 
     @property
     def distance_reward(self):
-        left_edge = self.f.processed_waypoints[self.closest_waypoint_id].left_safe
-        right_edge = self.f.processed_waypoints[self.closest_waypoint_id].right_safe
-        optimal_position = self.racepoints[self.closest_waypoint_id][:2]
-        if is_point_between(self.current_position, left_edge, optimal_position):
-            sigma = get_distance_between_points(left_edge, optimal_position) / 3
+        left_edge = self.f.closest_waypoint.left_safe
+        right_edge = self.f.closest_waypoint.right_safe
+        if is_point_between(self.f.current_position, left_edge, self.optimal_position):
+            sigma = get_distance_between_points(left_edge, self.optimal_position) / 3
         else:
-            sigma = get_distance_between_points(optimal_position, right_edge) / 3
+            sigma = get_distance_between_points(self.optimal_position, right_edge) / 3
 
         reward = pow(
             math.e,
             -(
                 (
-                    get_distance_between_points(self.current_position, optimal_position)
+                    get_distance_between_points(
+                        self.current_position, self.optimal_position
+                    )
                     ** 2
                 )
                 / (2 * (sigma**2))
@@ -1163,17 +1239,10 @@ class Reward:
 
     @property
     def heading_reward(self):
-        if self.closest_waypoint_id == len(self.racepoints) - 1:
-            next_waypoint = self.racepoints[0][:2]
-        else:
-            next_waypoint = self.racepoints[self.closest_waypoint_id + 1][:2]
-        required = get_bearing_between_points(self.current_position, next_waypoint)
-        current = self.f.heading
         sigma = 10
-        cone = get_turn_between_directions(current, required)
         reward = pow(
             math.e,
-            -((cone**2) / (2 * (sigma**2))),
+            -((self.f.racetrack_skew**2) / (2 * (sigma**2))),
         )
         return reward
 
@@ -1182,22 +1251,31 @@ def get_reward(f: Framework):
     r = Reward(f)
 
     # speed component of the reward
-    sc = 5 * r.speed_reward * speed_maintain_bonus
+    # TODO: * speed_maintain_bonus
+    sc = 5 * r.speed_reward
 
     # distance component of the reward
-    dc = 10 * r.distance_reward * distance_reduction_bonus
+    # TODO: * distance_reduction_bonus
+    dc = 10 * r.distance_reward
 
     # heading component of the reward
-    hc = 10 * r.heading_reward * steering_angle_maintain_bonus
+    # TODO: * steering_angle_maintain_bonus
+    hc = 10 * r.heading_reward
 
     # immediate component of the reward
     ic = (hc + dc + sc) ** 2
 
     # if an unpardonable action is taken, then the immediate reward is 0
-    if r.unpardonable_action:
+    if (
+        r.f.is_off_track
+        or r.f.racetrack_skew > 30
+        or r.f.is_headed_out_of_lookahead_cone
+        or r.f.is_steering_out_of_lookahead_cone
+    ):
         ic = 1e-3
 
     # long term component of the reward
-    lc = curve_bonus + intermediate_progress_bonus + straight_section_bonus
+    # lc = curve_bonus + intermediate_progress_bonus + straight_section_bonus
+    lc = 0  # TEMP
 
     return max(ic + lc, 1e-3)
