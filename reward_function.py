@@ -1070,7 +1070,7 @@ racepoints = [[-2.03762, -5.95555, 4.0, 0.07516]]  # replace: raceline
 
 
 class ProcessedRacepoint:
-    def __init__(self, point, opt_speed, opt_step_time, is_in_curved_section, is_in_straight_section) -> None:
+    def __init__(self, point, opt_speed, opt_step_time, is_in_straight_section, is_in_curved_section) -> None:
         (self.x, self.y) = point
         self.opt_speed = opt_speed
         self.opt_step_time = opt_step_time
@@ -1279,7 +1279,7 @@ def get_reward(f: Framework):
         or (r.f.is_steering_left and get_bearing_between_points(r.f.current_position, r.f.next_racepoint) < 0)
         or (r.f.is_steering_right and get_bearing_between_points(r.f.current_position, r.f.next_racepoint) > 0)
         or (r.f.action_speed - r.f.opt_speed > 1 and r.f.closest_racepoint.is_in_straight_section)
-        or (r.f.action_speed - r.f.opt_speed < -1.5 and r.f.closest_racepoint.is_in_straight_section)
+        or (r.f.action_speed - r.f.opt_speed < -1.5 and r.f.closest_racepoint.is_in_curved_section)
     ):
         ic = 1e-3
 
