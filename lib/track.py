@@ -48,3 +48,10 @@ def plot(center_line, inner_border, outer_border):
     ax = fig.add_subplot(111)
     plt.axis("equal")
     print_borders(ax, center_line, inner_border, outer_border)
+
+
+def plot_single(single):
+    fig = plt.figure(1, figsize=(16, 10))
+    ax = fig.add_subplot(111)
+    plt.axis("equal")
+    print_borders(ax, single)

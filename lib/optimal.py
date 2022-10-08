@@ -1,10 +1,12 @@
 import math
 
+import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
 from scipy import stats
-import numpy as np
+
+from lib.track import plot_single
 
 
 # Uses previous and next coordinates to calculate the radius of the curve,
@@ -17,24 +19,24 @@ def circle_radius(coordinates):
 
     a = x1 * (y2 - y3) - y1 * (x2 - x3) + x2 * y3 - x3 * y2
     b = (
-        (x1**2 + y1**2) * (y3 - y2)
-        + (x2**2 + y2**2) * (y1 - y3)
-        + (x3**2 + y3**2) * (y2 - y1)
+            (x1 ** 2 + y1 ** 2) * (y3 - y2)
+            + (x2 ** 2 + y2 ** 2) * (y1 - y3)
+            + (x3 ** 2 + y3 ** 2) * (y2 - y1)
     )
     c = (
-        (x1**2 + y1**2) * (x2 - x3)
-        + (x2**2 + y2**2) * (x3 - x1)
-        + (x3**2 + y3**2) * (x1 - x2)
+            (x1 ** 2 + y1 ** 2) * (x2 - x3)
+            + (x2 ** 2 + y2 ** 2) * (x3 - x1)
+            + (x3 ** 2 + y3 ** 2) * (x1 - x2)
     )
     d = (
-        (x1**2 + y1**2) * (x3 * y2 - x2 * y3)
-        + (x2**2 + y2**2) * (x1 * y3 - x3 * y1)
-        + (x3**2 + y3**2) * (x2 * y1 - x1 * y2)
+            (x1 ** 2 + y1 ** 2) * (x3 * y2 - x2 * y3)
+            + (x2 ** 2 + y2 ** 2) * (x1 * y3 - x3 * y1)
+            + (x3 ** 2 + y3 ** 2) * (x2 * y1 - x1 * y2)
     )
 
     # In case 'a' is zero (so radius is infinity)
     try:
-        r = abs((b**2 + c**2 - 4 * a * d) / abs(4 * a**2)) ** 0.5
+        r = abs((b ** 2 + c ** 2 - 4 * a * d) / abs(4 * a ** 2)) ** 0.5
     except Exception as e:
         r = 999
 
@@ -84,7 +86,7 @@ def speed(track, min_speed, max_speed, look_ahead_points):
 
     if look_ahead_points == 0:
         # Get the maximal velocity from radius
-        max_velocity = [(constant_multiple * i**0.5) for i in radius]
+        max_velocity = [(constant_multiple * i ** 0.5) for i in radius]
         # Get velocity from max_velocity (cap at MAX_SPEED)
         velocity = [min(v, max_speed) for v in max_velocity]
         return velocity
@@ -100,7 +102,7 @@ def speed(track, min_speed, max_speed, look_ahead_points):
                 next_n_radius.append(radius[index])
             radius_lookahead.append(min(next_n_radius))
         max_velocity_lookahead = [
-            (constant_multiple * i**0.5) for i in radius_lookahead
+            (constant_multiple * i ** 0.5) for i in radius_lookahead
         ]
         velocity_lookahead = [min(v, max_speed) for v in max_velocity_lookahead]
         return velocity_lookahead
@@ -144,17 +146,15 @@ def time(track, speed_):
     return time_to_prev
 
 
-def everything(track, speed_):
+def everything(track, speed_, high_speed_factor, low_speed_factor):
     # also add track type
     max_speed, min_speed = max(speed_), min(speed_)
-    sigma = (max_speed - min_speed) / 6
-    mean = (max_speed + min_speed) / 2
 
     race_track_everything = []
     for i in range(len(track)):
         curr_step_speed = speed_[i]
-        is_track_straight = curr_step_speed >= mean + sigma
-        is_track_curved = curr_step_speed <= mean - sigma
+        is_track_straight = curr_step_speed >= high_speed_factor * max_speed
+        is_track_curved = curr_step_speed <= low_speed_factor * min_speed
         race_track_everything.append(
             [
                 track[i][0],
@@ -302,3 +302,8 @@ def action_space(track, velocity, min_speed, max_speed):
     action_space_for_json.columns = ["steering_angle", "speed"]
     action_space_for_json["index"] = action_space_for_json.index
     return action_space_for_json
+
+
+def plot_track_type(all_things, straight=True):
+    track = [[p[0], p[1]] for p in all_things if p[3 if straight else 4] == 1]
+    plot_single(track)

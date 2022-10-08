@@ -13,15 +13,17 @@ def plot_line(ax, ob):
     )
 
 
-def print_borders(ax, waypoints, inner_border_waypoints, outer_border_waypoints):
+def print_borders(ax, waypoints, inner_border_waypoints=None, outer_border_waypoints=None):
     line = polygon.LineString(waypoints)
     plot_coordinates(ax, line)
     plot_line(ax, line)
 
-    line = polygon.LineString(inner_border_waypoints)
-    plot_coordinates(ax, line)
-    plot_line(ax, line)
+    if inner_border_waypoints is not None:
+        line = polygon.LineString(inner_border_waypoints)
+        plot_coordinates(ax, line)
+        plot_line(ax, line)
 
-    line = polygon.LineString(outer_border_waypoints)
-    plot_coordinates(ax, line)
-    plot_line(ax, line)
+    if outer_border_waypoints is not None:
+        line = polygon.LineString(outer_border_waypoints)
+        plot_coordinates(ax, line)
+        plot_line(ax, line)
