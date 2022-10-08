@@ -1070,10 +1070,12 @@ racepoints = [[-2.03762, -5.95555, 4.0, 0.07516]]  # replace: raceline
 
 
 class ProcessedRacepoint:
-    def __init__(self, point, opt_speed, opt_step_time) -> None:
+    def __init__(self, point, opt_speed, opt_step_time, is_in_curved_section, is_in_straight_section) -> None:
         (self.x, self.y) = point
         self.opt_speed = opt_speed
         self.opt_step_time = opt_step_time
+        self.is_in_curved_section = is_in_curved_section 
+        self.is_in_straight_section = is_in_straight_section
 
 
 def get_processed_racepoints(racepoints):
@@ -1084,7 +1086,7 @@ def get_processed_racepoints(racepoints):
         if previous != w:
             previous = w
 
-        processed_racepoints.append(ProcessedRacepoint(w[:2], w[2], w[3]))
+        processed_racepoints.append(ProcessedRacepoint(w[:2], w[2], w[3], w[4], w[5]))
 
     return processed_racepoints
 
@@ -1274,11 +1276,15 @@ def get_reward(f: Framework):
         or r.f.racetrack_skew > 30
         or r.f.is_headed_out_of_lookahead_cone
         or r.f.is_steering_out_of_lookahead_cone
+        or (r.f.is_steering_left and get_bearing_between_points(r.f.current_position, r.f.next_racepoint) < 0)
+        or (r.f.is_steering_right and get_bearing_between_points(r.f.current_position, r.f.next_racepoint) > 0)
+        or (r.f.action_speed - r.f.opt_speed > 1 and r.f.closest_racepoint.is_in_straight_section)
+        or (r.f.action_speed - r.f.opt_speed < -1.5 and r.f.closest_racepoint.is_in_straight_section)
     ):
         ic = 1e-3
 
     # long term component of the reward
     # lc = curve_bonus + intermediate_progress_bonus + straight_section_bonus
-    lc = 0  # TEMP
+    lc = r.complete_lap_reward
 
     return max(ic + lc, 1e-3)
