@@ -1120,6 +1120,51 @@ class Framework(_Framework):
         self.racetrack_skew = get_turn_between_directions(
             self.racetrack_bearing, self.true_bearing
         )
+        self.optimal_position = (self.closest_racepoint.x, self.closest_racepoint.y)
+        self.next_optimal_position = (self.next_racepoint.x, self.next_racepoint.y)
+
+    @property
+    def distance_z_factor(self):
+        left_edge = self.closest_waypoint.left_safe
+        right_edge = self.closest_waypoint.right_safe
+        if is_point_between(self.current_position, left_edge, self.optimal_position):
+            sigma = get_distance_between_points(left_edge, self.optimal_position) / 3
+        else:
+            sigma = get_distance_between_points(self.optimal_position, right_edge) / 3
+
+        reward = pow(
+            math.e,
+            -(
+                (
+                    get_distance_between_points(
+                        self.current_position, self.optimal_position
+                    )
+                    ** 2
+                )
+                / (2 * (sigma**2))
+            ),
+        )
+        return reward
+
+    @property
+    def heading_z_factor(self):
+        sigma = 10
+        reward = pow(
+            math.e,
+            -((self.racetrack_skew**2) / (2 * (sigma**2))),
+        )
+        return reward
+
+    @property
+    def speed_z_factor(self):
+        # TODO: decide between action speed and track speed
+        current_speed = self.action_speed
+        optimal_speed = self.opt_speed
+        sigma = (MAX_SPEED - MIN_SPEED) / 6
+        reward = pow(
+            math.e, ((current_speed - optimal_speed) ** 2) / (2 * (sigma**2))
+        )
+        return reward
 
     @property
     def is_headed_out_of_lookahead_cone(self):
@@ -1200,51 +1245,9 @@ MAX_SPEED = 4.0  # replace: MAX_SPEED
 class Reward:
     def __init__(self, f: Framework) -> None:
         self.f = f
-        self.optimal_position = (self.f.closest_racepoint.x, self.f.closest_racepoint.y)
-        self.next_optimal_position = (self.f.next_racepoint.x, self.f.next_racepoint.y)
-
-    @property
-    def speed_reward(self):
-        # TODO: decide between action speed and track speed
-        current_speed = self.f.action_speed
-        optimal_speed = self.f.opt_speed
-        sigma = (MAX_SPEED - MIN_SPEED) / 6
-        reward = pow(
-            math.e, ((current_speed - optimal_speed) ** 2) / (2 * (sigma**2))
-        )
-        return reward
-
-    @property
-    def distance_reward(self):
-        left_edge = self.f.closest_waypoint.left_safe
-        right_edge = self.f.closest_waypoint.right_safe
-        if is_point_between(self.f.current_position, left_edge, self.optimal_position):
-            sigma = get_distance_between_points(left_edge, self.optimal_position) / 3
-        else:
-            sigma = get_distance_between_points(self.optimal_position, right_edge) / 3
-
-        reward = pow(
-            math.e,
-            -(
-                (
-                    get_distance_between_points(
-                        self.current_position, self.optimal_position
-                    )
-                    ** 2
-                )
-                / (2 * (sigma**2))
-            ),
-        )
-        return reward
-
-    @property
-    def heading_reward(self):
-        sigma = 10
-        reward = pow(
-            math.e,
-            -((self.f.racetrack_skew**2) / (2 * (sigma**2))),
-        )
-        return reward
+        self.speed_reward = self.f.speed_z_factor
+        self.distance_reward = self.f.distance_z_factor
+        self.heading_reward = self.f.heading_z_factor
 
 
 def get_reward(f: Framework):
