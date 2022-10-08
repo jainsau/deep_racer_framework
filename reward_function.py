@@ -1278,7 +1278,7 @@ def get_reward(f: Framework):
         or r.f.is_steering_out_of_lookahead_cone
         or (r.f.is_steering_left and get_bearing_between_points(r.f.current_position, r.f.next_racepoint) < 0)
         or (r.f.is_steering_right and get_bearing_between_points(r.f.current_position, r.f.next_racepoint) > 0)
-        or (r.f.action_speed - r.f.opt_speed > 1 and r.f.closest_racepoint.is_in_straight_section)
+        or (r.f.opt_speed - r.f.action_speed > 1 and r.f.closest_racepoint.is_in_straight_section)
         or (r.f.action_speed - r.f.opt_speed < -1.5 and r.f.closest_racepoint.is_in_curved_section)
     ):
         ic = 1e-3
