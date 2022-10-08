@@ -1099,6 +1099,7 @@ class Framework(_Framework):
     def __init__(self, params):
         super().__init__(params)
         self.racepoints = get_processed_racepoints(racepoints)
+        self.has_crashed_since_beginning_of_lap = False
 
     def process_params(self, params):
         super().process_params(params)
@@ -1124,6 +1125,12 @@ class Framework(_Framework):
         )
         self.optimal_position = (self.closest_racepoint.x, self.closest_racepoint.y)
         self.next_optimal_position = (self.next_racepoint.x, self.next_racepoint.y)
+        if len(self._history) >= 1000:
+            self._history.pop(0)
+        if self.steps <= 2:
+            self.has_crashed_since_beginning_of_lap = False
+        if self.is_crashed:
+            self.has_crashed_since_beginning_of_lap = True
 
     @property
     def distance_z_factor(self):
@@ -1250,6 +1257,13 @@ class Reward:
         self.speed_reward = self.f.speed_z_factor
         self.distance_reward = self.f.distance_z_factor
         self.heading_reward = self.f.heading_z_factor
+
+    @property
+    def track_completion_reward(self):
+        reward = 0
+        if self.f.is_complete_lap and not self.f.has_crashed_since_beginning_of_lap:
+            reward = 100
+        return reward
 
 
 def get_reward(f: Framework):
