@@ -1100,7 +1100,10 @@ def get_processed_racepoints(racepoints):
 
 
 class HistoricStep(_HistoricStep):
-    pass
+    def __init__(self, framework, previous_step):
+        super().__init__(framework, previous_step)
+        self.straight_section_score = framework.straight_section_score
+        self.curved_section_score = framework.curved_section_score
 
 
 class Framework(_Framework):
@@ -1136,8 +1139,20 @@ class Framework(_Framework):
             self._history.pop(0)
         if self.steps <= 2:
             self.has_crashed_since_beginning_of_lap = False
+        if not self.prev_racepoint.is_in_straight_section and self.next_racepoint.is_in_straight_section:
+            self.has_crashed_since_beginning_of_straight_section = False
+            self.straight_section_start_id = self.next_waypoint_id
+        if not self.prev_racepoint.is_in_curved_section and self.next_racepoint.is_in_curved_section:
+            self.has_crashed_since_beginning_of_curved_section = False
+            self.curved_section_start_id = self.next_waypoint_id
         if self.is_crashed:
             self.has_crashed_since_beginning_of_lap = True
+            self.has_crashed_since_beginning_of_straight_section = True
+            self.has_crashed_since_beginning_of_curved_section = True
+        if self.next_racepoint.is_in_straight_section:
+            self.straight_section_score = self.speed_z_factor * self.distance_z_factor * self.heading_z_factor
+        if self.next_racepoint.is_in_curved_section:
+            self.curved_section_score = self.speed_z_factor * self.distance_z_factor * self.heading_z_factor
 
     @property
     def distance_z_factor(self):
@@ -1274,6 +1289,28 @@ class Reward:
             reward = 100
         return reward
 
+    @property
+    def straight_section_bonus(self):
+        reward = 0.0
+        if self.f.prev_racepoint.is_in_straight_section and not self.f.next_racepoint.is_in_straight_section \
+                and not self.f.has_crashed_since_beginning_of_straight_section:
+            start = self.f.straight_section_start_id
+            end = self.f.next_waypoint_id
+            steps = self.f._history[start:end]
+            reward = sum(s.straight_section_score for s in steps)
+        return reward
+
+    @property
+    def curved_section_bonus(self):
+        reward = 0.0
+        if self.f.prev_racepoint.is_in_curved_section and not self.f.next_racepoint.is_in_curved_section \
+                and not self.f.has_crashed_since_beginning_of_curved_section:
+            start = self.f.curved_section_start_id
+            end = self.f.next_waypoint_id
+            steps = self.f._history[start:end]
+            reward = sum(s.curved_section_score for s in steps)
+        return reward
+
 
 def get_reward(f: Framework):
     r = Reward(f)
@@ -1320,6 +1357,6 @@ def get_reward(f: Framework):
 
     # long term component of the reward
     # lc = curve_bonus + intermediate_progress_bonus + straight_section_bonus
-    lc = r.complete_lap_reward
+    lc = r.track_completion_reward + r.straight_section_bonus + r.curved_section_bonus
 
     return max(ic + lc, 1e-3)
