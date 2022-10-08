@@ -19,24 +19,24 @@ def circle_radius(coordinates):
 
     a = x1 * (y2 - y3) - y1 * (x2 - x3) + x2 * y3 - x3 * y2
     b = (
-            (x1 ** 2 + y1 ** 2) * (y3 - y2)
-            + (x2 ** 2 + y2 ** 2) * (y1 - y3)
-            + (x3 ** 2 + y3 ** 2) * (y2 - y1)
+        (x1**2 + y1**2) * (y3 - y2)
+        + (x2**2 + y2**2) * (y1 - y3)
+        + (x3**2 + y3**2) * (y2 - y1)
     )
     c = (
-            (x1 ** 2 + y1 ** 2) * (x2 - x3)
-            + (x2 ** 2 + y2 ** 2) * (x3 - x1)
-            + (x3 ** 2 + y3 ** 2) * (x1 - x2)
+        (x1**2 + y1**2) * (x2 - x3)
+        + (x2**2 + y2**2) * (x3 - x1)
+        + (x3**2 + y3**2) * (x1 - x2)
     )
     d = (
-            (x1 ** 2 + y1 ** 2) * (x3 * y2 - x2 * y3)
-            + (x2 ** 2 + y2 ** 2) * (x1 * y3 - x3 * y1)
-            + (x3 ** 2 + y3 ** 2) * (x2 * y1 - x1 * y2)
+        (x1**2 + y1**2) * (x3 * y2 - x2 * y3)
+        + (x2**2 + y2**2) * (x1 * y3 - x3 * y1)
+        + (x3**2 + y3**2) * (x2 * y1 - x1 * y2)
     )
 
     # In case 'a' is zero (so radius is infinity)
     try:
-        r = abs((b ** 2 + c ** 2 - 4 * a * d) / abs(4 * a ** 2)) ** 0.5
+        r = abs((b**2 + c**2 - 4 * a * d) / abs(4 * a**2)) ** 0.5
     except Exception as e:
         r = 999
 
@@ -86,7 +86,7 @@ def speed(track, min_speed, max_speed, look_ahead_points):
 
     if look_ahead_points == 0:
         # Get the maximal velocity from radius
-        max_velocity = [(constant_multiple * i ** 0.5) for i in radius]
+        max_velocity = [(constant_multiple * i**0.5) for i in radius]
         # Get velocity from max_velocity (cap at MAX_SPEED)
         velocity = [min(v, max_speed) for v in max_velocity]
         return velocity
@@ -102,7 +102,7 @@ def speed(track, min_speed, max_speed, look_ahead_points):
                 next_n_radius.append(radius[index])
             radius_lookahead.append(min(next_n_radius))
         max_velocity_lookahead = [
-            (constant_multiple * i ** 0.5) for i in radius_lookahead
+            (constant_multiple * i**0.5) for i in radius_lookahead
         ]
         velocity_lookahead = [min(v, max_speed) for v in max_velocity_lookahead]
         return velocity_lookahead

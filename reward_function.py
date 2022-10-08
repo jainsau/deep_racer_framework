@@ -1067,14 +1067,22 @@ racepoints = [[-2.03762, -5.95555, 4.0, 0.07516]]  # replace: raceline
 # Framework overrides
 #
 # -------------------------------------------------------------------------------
+from statistics import stdev
 
 
 class ProcessedRacepoint:
-    def __init__(self, point, opt_speed, opt_step_time, is_in_straight_section, is_in_curved_section) -> None:
+    def __init__(
+        self,
+        point,
+        opt_speed,
+        opt_step_time,
+        is_in_straight_section,
+        is_in_curved_section,
+    ) -> None:
         (self.x, self.y) = point
         self.opt_speed = opt_speed
         self.opt_step_time = opt_step_time
-        self.is_in_curved_section = is_in_curved_section 
+        self.is_in_curved_section = is_in_curved_section
         self.is_in_straight_section = is_in_straight_section
 
 
@@ -1165,12 +1173,14 @@ class Framework(_Framework):
 
     @property
     def speed_z_factor(self):
-        # TODO: decide between action speed and track speed
-        current_speed = self.action_speed
-        optimal_speed = self.opt_speed
-        sigma = (MAX_SPEED - MIN_SPEED) / 6
+        speeds = self.racepoints[
+            (self.closest_waypoint_id - 3) : (
+                (self.closest_waypoint_id + 6) % len(self.processed_waypoints)
+            )
+        ]
+        sigma = stdev([p.opt_speed for p in speeds])
         reward = pow(
-            math.e, ((current_speed - optimal_speed) ** 2) / (2 * (sigma**2))
+            math.e, ((self.action_speed - self.opt_speed) ** 2) / (2 * (sigma**2))
         )
         return reward
 
@@ -1289,10 +1299,22 @@ def get_reward(f: Framework):
         or r.f.racetrack_skew > 30
         or r.f.is_headed_out_of_lookahead_cone
         or r.f.is_steering_out_of_lookahead_cone
-        or (r.f.is_steering_left and get_bearing_between_points(r.f.current_position, r.f.next_racepoint) < 0)
-        or (r.f.is_steering_right and get_bearing_between_points(r.f.current_position, r.f.next_racepoint) > 0)
-        or (r.f.opt_speed - r.f.action_speed > 1 and r.f.closest_racepoint.is_in_straight_section)
-        or (r.f.action_speed - r.f.opt_speed < -1.5 and r.f.closest_racepoint.is_in_curved_section)
+        or (
+            r.f.is_steering_left
+            and get_bearing_between_points(r.f.current_position, r.f.next_racepoint) < 0
+        )
+        or (
+            r.f.is_steering_right
+            and get_bearing_between_points(r.f.current_position, r.f.next_racepoint) > 0
+        )
+        or (
+            r.f.opt_speed - r.f.action_speed > 1
+            and r.f.closest_racepoint.is_in_straight_section
+        )
+        or (
+            r.f.action_speed - r.f.opt_speed < -1.5
+            and r.f.closest_racepoint.is_in_curved_section
+        )
     ):
         ic = 1e-3
 
