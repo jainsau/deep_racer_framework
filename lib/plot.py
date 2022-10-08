@@ -13,7 +13,9 @@ def plot_line(ax, ob):
     )
 
 
-def print_borders(ax, waypoints, inner_border_waypoints=None, outer_border_waypoints=None):
+def print_borders(
+    ax, waypoints, inner_border_waypoints=None, outer_border_waypoints=None
+):
     line = polygon.LineString(waypoints)
     plot_coordinates(ax, line)
     plot_line(ax, line)
