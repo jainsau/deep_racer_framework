@@ -1099,7 +1099,6 @@ class Framework(_Framework):
     def __init__(self, params):
         super().__init__(params)
         self.racepoints = get_processed_racepoints(racepoints)
-        self.has_crashed_since_beginning_of_lap = False
 
     def process_params(self, params):
         super().process_params(params)
