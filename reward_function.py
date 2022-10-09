@@ -267,7 +267,7 @@ def get_processed_waypoints(waypoints, track_width):
 # -------------------------------------------------------------------------------
 
 
-class _HistoricStep:  # CHANGE: HistoricStep -> _HistoricStep
+class HistoricStep:
     def __init__(self, framework, previous_step):
         self.x = framework.x
         self.y = framework.y
@@ -297,7 +297,7 @@ class _Framework:  # CHANGE: Framework -> _Framework
     def __init__(self, params):
         # Real PRIVATE variables set here
         self.processed_waypoints = get_processed_waypoints(
-            track_original, params[ParamNames.TRACK_WIDTH]
+            params[ParamNames.WAYPOINTS], params[ParamNames.TRACK_WIDTH]
         )
         self._history = []
         self._previous_front_object = -1
@@ -490,7 +490,7 @@ class _Framework:  # CHANGE: Framework -> _Framework
         else:
             previous_step = None
 
-        this_step = _HistoricStep(self, previous_step)
+        this_step = HistoricStep(self, previous_step)
         self._history.append(this_step)
 
         #
@@ -694,7 +694,7 @@ class _Framework:  # CHANGE: Framework -> _Framework
                     )
                 previous_waypoint = (w.x, w.y)
             elif off_track_distance == 0.0:
-                return 0.0, 0.0, False
+                return False, False, False
             else:
                 (
                     final_previous_progress_distance,
@@ -1059,166 +1059,167 @@ class _Framework:  # CHANGE: Framework -> _Framework
 # -------------------------------------------------------------------------------
 
 
-racepoints = [[-2.03954, -5.95967, 4.0, 1.0, 0.0],
- [-1.74085, -6.00654, 4.0, 1.0, 0.0],
- [-1.44222, -6.05378, 4.0, 1.0, 0.0],
- [-1.14367, -6.10147, 4.0, 1.0, 0.0],
- [-0.8452, -6.14972, 4.0, 1.0, 0.0],
- [-0.54684, -6.19862, 4.0, 1.0, 0.0],
- [-0.24862, -6.2483, 4.0, 1.0, 0.0],
- [0.04771, -6.29512, 4.0, 1.0, 0.0],
- [0.34325, -6.33652, 4.0, 1.0, 0.0],
- [0.63767, -6.36976, 3.64089, 1.0, 0.0],
- [0.93057, -6.3923, 3.25251, 0.0, 0.0],
- [1.22148, -6.40177, 2.96657, 0.0, 1.0],
- [1.50978, -6.39595, 2.76198, 0.0, 1.0],
- [1.79468, -6.37297, 2.59506, 0.0, 1.0],
- [2.07524, -6.33109, 2.47074, 0.0, 1.0],
- [2.35027, -6.26889, 2.37363, 0.0, 1.0],
- [2.61834, -6.18525, 2.29829, 0.0, 1.0],
- [2.87773, -6.07939, 2.23736, 0.0, 1.0],
- [3.12635, -5.95087, 2.2035, 0.0, 1.0],
- [3.36201, -5.80001, 2.18018, 0.0, 1.0],
- [3.58242, -5.62763, 2.1786, 0.0, 1.0],
- [3.78554, -5.43528, 2.19257, 0.0, 1.0],
- [3.96979, -5.22496, 2.22086, 0.0, 1.0],
- [4.13414, -4.99889, 2.25966, 0.0, 1.0],
- [4.27805, -4.75932, 2.31776, 0.0, 1.0],
- [4.4016, -4.50843, 2.39671, 0.0, 1.0],
- [4.50539, -4.24821, 2.48671, 0.0, 1.0],
- [4.59025, -3.98036, 2.60247, 0.0, 1.0],
- [4.65739, -3.70634, 2.73299, 0.0, 1.0],
- [4.70804, -3.42735, 2.90583, 0.0, 1.0],
- [4.74378, -3.14441, 3.10125, 0.0, 1.0],
- [4.76615, -2.85835, 3.33697, 0.0, 0.0],
- [4.77672, -2.56987, 3.63232, 1.0, 0.0],
- [4.77716, -2.27956, 3.98568, 1.0, 0.0],
- [4.78548, -2.00292, 3.5566, 0.0, 0.0],
- [4.80318, -1.73053, 3.23334, 0.0, 0.0],
- [4.83172, -1.46326, 2.98331, 0.0, 1.0],
- [4.87238, -1.20195, 2.78299, 0.0, 1.0],
- [4.92625, -0.94742, 2.61732, 0.0, 1.0],
- [4.99432, -0.70047, 2.47446, 0.0, 1.0],
- [5.0775, -0.46194, 2.33357, 0.0, 1.0],
- [5.17689, -0.23288, 2.32145, 0.0, 1.0],
- [5.29207, -0.01343, 2.30628, 0.0, 1.0],
- [5.42284, 0.19616, 2.29624, 0.0, 1.0],
- [5.56918, 0.39563, 2.28477, 0.0, 1.0],
- [5.7313, 0.58459, 2.27949, 0.0, 1.0],
- [5.90973, 0.76269, 2.27847, 0.0, 1.0],
- [6.10555, 0.92959, 2.27739, 0.0, 1.0],
- [6.32137, 1.08531, 2.27384, 0.0, 1.0],
- [6.56538, 1.23149, 2.26136, 0.0, 1.0],
- [6.79496, 1.39844, 2.20268, 0.0, 1.0],
- [7.00401, 1.58238, 2.13998, 0.0, 1.0],
- [7.19118, 1.78225, 2.08921, 0.0, 1.0],
- [7.35523, 1.99682, 2.05263, 0.0, 1.0],
- [7.49512, 2.22468, 2.02362, 0.0, 1.0],
- [7.60981, 2.46436, 2.00748, 0.0, 1.0],
- [7.69841, 2.71418, 2.0, 0.0, 1.0],
- [7.7601, 2.97241, 2.00082, 0.0, 1.0],
- [7.79417, 3.23713, 2.00955, 0.0, 1.0],
- [7.8, 3.50632, 2.01848, 0.0, 1.0],
- [7.77691, 3.77777, 2.03921, 0.0, 1.0],
- [7.72458, 4.04902, 2.06796, 0.0, 1.0],
- [7.64304, 4.31746, 2.1056, 0.0, 1.0],
- [7.53282, 4.58031, 2.14425, 0.0, 1.0],
- [7.39476, 4.83474, 2.18961, 0.0, 1.0],
- [7.23036, 5.07787, 2.24363, 0.0, 1.0],
- [7.04181, 5.30702, 2.30075, 0.0, 1.0],
- [6.83197, 5.51974, 2.36299, 0.0, 1.0],
- [6.6042, 5.71409, 2.42325, 0.0, 1.0],
- [6.36167, 5.88898, 2.48615, 0.0, 1.0],
- [6.1069, 6.04425, 2.55023, 0.0, 1.0],
- [5.84181, 6.18022, 2.61004, 0.0, 1.0],
- [5.56792, 6.29727, 2.62161, 0.0, 1.0],
- [5.28634, 6.39511, 2.62627, 0.0, 1.0],
- [4.99821, 6.47335, 2.6255, 0.0, 1.0],
- [4.70494, 6.53149, 2.62179, 0.0, 1.0],
- [4.40843, 6.56907, 2.62506, 0.0, 1.0],
- [4.11093, 6.58596, 2.62773, 0.0, 1.0],
- [3.81472, 6.58234, 2.64592, 0.0, 1.0],
- [3.52166, 6.55892, 2.66489, 0.0, 1.0],
- [3.23308, 6.51655, 2.70009, 0.0, 1.0],
- [2.9498, 6.45627, 2.74185, 0.0, 1.0],
- [2.67233, 6.37913, 2.81637, 0.0, 1.0],
- [2.40079, 6.28635, 2.9014, 0.0, 1.0],
- [2.13516, 6.17909, 3.01908, 0.0, 1.0],
- [1.87523, 6.05859, 3.1761, 0.0, 1.0],
- [1.62065, 5.92616, 3.38918, 0.0, 0.0],
- [1.3709, 5.78326, 3.66652, 1.0, 0.0],
- [1.12541, 5.63138, 4.0, 1.0, 0.0],
- [0.88349, 5.47212, 4.0, 1.0, 0.0],
- [0.64439, 5.30709, 4.0, 1.0, 0.0],
- [0.40732, 5.13795, 4.0, 1.0, 0.0],
- [0.1661, 4.96239, 4.0, 1.0, 0.0],
- [-0.07737, 4.79087, 4.0, 1.0, 0.0],
- [-0.32376, 4.62469, 4.0, 1.0, 0.0],
- [-0.57365, 4.46508, 4.0, 1.0, 0.0],
- [-0.82747, 4.31309, 3.82767, 1.0, 0.0],
- [-1.08555, 4.16966, 3.6689, 1.0, 0.0],
- [-1.34811, 4.03558, 3.56447, 0.0, 0.0],
- [-1.61522, 3.91146, 3.48316, 0.0, 0.0],
- [-1.88688, 3.79784, 3.42655, 0.0, 0.0],
- [-2.16302, 3.69518, 3.38554, 0.0, 0.0],
- [-2.4435, 3.60386, 3.36692, 0.0, 0.0],
- [-2.7281, 3.52416, 3.36405, 0.0, 0.0],
- [-3.01653, 3.45627, 3.35458, 0.0, 0.0],
- [-3.30849, 3.40045, 3.35684, 0.0, 0.0],
- [-3.60363, 3.35687, 3.34037, 0.0, 0.0],
- [-3.90152, 3.32587, 3.32082, 0.0, 0.0],
- [-4.20116, 3.30783, 3.13572, 0.0, 1.0],
- [-4.49467, 3.27581, 2.97409, 0.0, 1.0],
- [-4.78313, 3.22872, 2.84248, 0.0, 1.0],
- [-5.06569, 3.16568, 2.73682, 0.0, 1.0],
- [-5.34133, 3.08609, 2.64347, 0.0, 1.0],
- [-5.60901, 2.9894, 2.56472, 0.0, 1.0],
- [-5.86766, 2.87522, 2.51725, 0.0, 1.0],
- [-6.11631, 2.74355, 2.47434, 0.0, 1.0],
- [-6.35395, 2.5944, 2.44782, 0.0, 1.0],
- [-6.5796, 2.42796, 2.43128, 0.0, 1.0],
- [-6.79228, 2.24459, 2.4356, 0.0, 1.0],
- [-6.99115, 2.04488, 2.44331, 0.0, 1.0],
- [-7.17532, 1.82951, 2.46233, 0.0, 1.0],
- [-7.34399, 1.59931, 2.49026, 0.0, 1.0],
- [-7.49641, 1.35529, 2.52589, 0.0, 1.0],
- [-7.63193, 1.0986, 2.57916, 0.0, 1.0],
- [-7.75016, 0.83067, 2.63521, 0.0, 1.0],
- [-7.85081, 0.55298, 2.69593, 0.0, 1.0],
- [-7.93374, 0.26715, 2.76438, 0.0, 1.0],
- [-7.99904, -0.02516, 2.83953, 0.0, 1.0],
- [-8.04703, -0.32222, 2.91711, 0.0, 1.0],
- [-8.0782, -0.6224, 2.99655, 0.0, 1.0],
- [-8.09317, -0.92424, 3.06828, 0.0, 1.0],
- [-8.09261, -1.22658, 3.08583, 0.0, 1.0],
- [-8.07669, -1.52841, 2.9889, 0.0, 1.0],
- [-8.0445, -1.8286, 2.88866, 0.0, 1.0],
- [-7.99507, -2.12587, 2.7921, 0.0, 1.0],
- [-7.92756, -2.41871, 2.71816, 0.0, 1.0],
- [-7.84151, -2.70541, 2.64451, 0.0, 1.0],
- [-7.7366, -2.98412, 2.59632, 0.0, 1.0],
- [-7.61305, -3.25314, 2.5542, 0.0, 1.0],
- [-7.47125, -3.51087, 2.52433, 0.0, 1.0],
- [-7.31186, -3.75591, 2.51021, 0.0, 1.0],
- [-7.13577, -3.98716, 2.5009, 0.0, 1.0],
- [-6.94391, -4.20368, 2.51583, 0.0, 1.0],
- [-6.73744, -4.40495, 2.54018, 0.0, 1.0],
- [-6.51752, -4.59061, 2.57489, 0.0, 1.0],
- [-6.28527, -4.76051, 2.63141, 0.0, 1.0],
- [-6.04188, -4.9148, 2.70919, 0.0, 1.0],
- [-5.78855, -5.05385, 2.80576, 0.0, 1.0],
- [-5.52641, -5.17826, 2.92836, 0.0, 1.0],
- [-5.25657, -5.28878, 3.08693, 0.0, 1.0],
- [-4.98013, -5.38645, 3.26653, 0.0, 0.0],
- [-4.69806, -5.47231, 3.50902, 0.0, 0.0],
- [-4.41131, -5.54768, 3.8213, 1.0, 0.0],
- [-4.12078, -5.614, 4.0, 1.0, 0.0],
- [-3.82729, -5.67279, 4.0, 1.0, 0.0],
- [-3.53159, -5.72571, 4.0, 1.0, 0.0],
- [-3.2343, -5.7745, 4.0, 1.0, 0.0],
- [-2.93593, -5.82097, 4.0, 1.0, 0.0],
- [-2.63709, -5.8669, 4.0, 1.0, 0.0],
- [-2.33829, -5.91314, 4.0, 1.0, 0.0]]  # replace: raceline
+racepoints = [[-2.03954, -5.95967, 4.0, True, False],
+ [-1.74085, -6.00654, 4.0, True, False],
+ [-1.44222, -6.05378, 4.0, True, False],
+ [-1.14367, -6.10147, 4.0, True, False],
+ [-0.8452, -6.14972, 4.0, True, False],
+ [-0.54684, -6.19862, 4.0, True, False],
+ [-0.24862, -6.2483, 4.0, True, False],
+ [0.04771, -6.29512, 4.0, True, False],
+ [0.34325, -6.33652, 4.0, True, False],
+ [0.63767, -6.36976, 3.64089, True, False],
+ [0.93057, -6.3923, 3.25251, False, False],
+ [1.22148, -6.40177, 2.96657, False, True],
+ [1.50978, -6.39595, 2.76198, False, True],
+ [1.79468, -6.37297, 2.59506, False, True],
+ [2.07524, -6.33109, 2.47074, False, True],
+ [2.35027, -6.26889, 2.37363, False, True],
+ [2.61834, -6.18525, 2.29829, False, True],
+ [2.87773, -6.07939, 2.23736, False, True],
+ [3.12635, -5.95087, 2.2035, False, True],
+ [3.36201, -5.80001, 2.18018, False, True],
+ [3.58242, -5.62763, 2.1786, False, True],
+ [3.78554, -5.43528, 2.19257, False, True],
+ [3.96979, -5.22496, 2.22086, False, True],
+ [4.13414, -4.99889, 2.25966, False, True],
+ [4.27805, -4.75932, 2.31776, False, True],
+ [4.4016, -4.50843, 2.39671, False, True],
+ [4.50539, -4.24821, 2.48671, False, True],
+ [4.59025, -3.98036, 2.60247, False, True],
+ [4.65739, -3.70634, 2.73299, False, True],
+ [4.70804, -3.42735, 2.90583, False, True],
+ [4.74378, -3.14441, 3.10125, False, True],
+ [4.76615, -2.85835, 3.33697, False, False],
+ [4.77672, -2.56987, 3.63232, True, False],
+ [4.77716, -2.27956, 3.98568, True, False],
+ [4.78548, -2.00292, 3.5566, False, False],
+ [4.80318, -1.73053, 3.23334, False, False],
+ [4.83172, -1.46326, 2.98331, False, True],
+ [4.87238, -1.20195, 2.78299, False, True],
+ [4.92625, -0.94742, 2.61732, False, True],
+ [4.99432, -0.70047, 2.47446, False, True],
+ [5.0775, -0.46194, 2.33357, False, True],
+ [5.17689, -0.23288, 2.32145, False, True],
+ [5.29207, -0.01343, 2.30628, False, True],
+ [5.42284, 0.19616, 2.29624, False, True],
+ [5.56918, 0.39563, 2.28477, False, True],
+ [5.7313, 0.58459, 2.27949, False, True],
+ [5.90973, 0.76269, 2.27847, False, True],
+ [6.10555, 0.92959, 2.27739, False, True],
+ [6.32137, 1.08531, 2.27384, False, True],
+ [6.56538, 1.23149, 2.26136, False, True],
+ [6.79496, 1.39844, 2.20268, False, True],
+ [7.00401, 1.58238, 2.13998, False, True],
+ [7.19118, 1.78225, 2.08921, False, True],
+ [7.35523, 1.99682, 2.05263, False, True],
+ [7.49512, 2.22468, 2.02362, False, True],
+ [7.60981, 2.46436, 2.00748, False, True],
+ [7.69841, 2.71418, 2.0, False, True],
+ [7.7601, 2.97241, 2.00082, False, True],
+ [7.79417, 3.23713, 2.00955, False, True],
+ [7.8, 3.50632, 2.01848, False, True],
+ [7.77691, 3.77777, 2.03921, False, True],
+ [7.72458, 4.04902, 2.06796, False, True],
+ [7.64304, 4.31746, 2.1056, False, True],
+ [7.53282, 4.58031, 2.14425, False, True],
+ [7.39476, 4.83474, 2.18961, False, True],
+ [7.23036, 5.07787, 2.24363, False, True],
+ [7.04181, 5.30702, 2.30075, False, True],
+ [6.83197, 5.51974, 2.36299, False, True],
+ [6.6042, 5.71409, 2.42325, False, True],
+ [6.36167, 5.88898, 2.48615, False, True],
+ [6.1069, 6.04425, 2.55023, False, True],
+ [5.84181, 6.18022, 2.61004, False, True],
+ [5.56792, 6.29727, 2.62161, False, True],
+ [5.28634, 6.39511, 2.62627, False, True],
+ [4.99821, 6.47335, 2.6255, False, True],
+ [4.70494, 6.53149, 2.62179, False, True],
+ [4.40843, 6.56907, 2.62506, False, True],
+ [4.11093, 6.58596, 2.62773, False, True],
+ [3.81472, 6.58234, 2.64592, False, True],
+ [3.52166, 6.55892, 2.66489, False, True],
+ [3.23308, 6.51655, 2.70009, False, True],
+ [2.9498, 6.45627, 2.74185, False, True],
+ [2.67233, 6.37913, 2.81637, False, True],
+ [2.40079, 6.28635, 2.9014, False, True],
+ [2.13516, 6.17909, 3.01908, False, True],
+ [1.87523, 6.05859, 3.1761, False, True],
+ [1.62065, 5.92616, 3.38918, False, False],
+ [1.3709, 5.78326, 3.66652, True, False],
+ [1.12541, 5.63138, 4.0, True, False],
+ [0.88349, 5.47212, 4.0, True, False],
+ [0.64439, 5.30709, 4.0, True, False],
+ [0.40732, 5.13795, 4.0, True, False],
+ [0.1661, 4.96239, 4.0, True, False],
+ [-0.07737, 4.79087, 4.0, True, False],
+ [-0.32376, 4.62469, 4.0, True, False],
+ [-0.57365, 4.46508, 4.0, True, False],
+ [-0.82747, 4.31309, 3.82767, True, False],
+ [-1.08555, 4.16966, 3.6689, True, False],
+ [-1.34811, 4.03558, 3.56447, False, False],
+ [-1.61522, 3.91146, 3.48316, False, False],
+ [-1.88688, 3.79784, 3.42655, False, False],
+ [-2.16302, 3.69518, 3.38554, False, False],
+ [-2.4435, 3.60386, 3.36692, False, False],
+ [-2.7281, 3.52416, 3.36405, False, False],
+ [-3.01653, 3.45627, 3.35458, False, False],
+ [-3.30849, 3.40045, 3.35684, False, False],
+ [-3.60363, 3.35687, 3.34037, False, False],
+ [-3.90152, 3.32587, 3.32082, False, False],
+ [-4.20116, 3.30783, 3.13572, False, True],
+ [-4.49467, 3.27581, 2.97409, False, True],
+ [-4.78313, 3.22872, 2.84248, False, True],
+ [-5.06569, 3.16568, 2.73682, False, True],
+ [-5.34133, 3.08609, 2.64347, False, True],
+ [-5.60901, 2.9894, 2.56472, False, True],
+ [-5.86766, 2.87522, 2.51725, False, True],
+ [-6.11631, 2.74355, 2.47434, False, True],
+ [-6.35395, 2.5944, 2.44782, False, True],
+ [-6.5796, 2.42796, 2.43128, False, True],
+ [-6.79228, 2.24459, 2.4356, False, True],
+ [-6.99115, 2.04488, 2.44331, False, True],
+ [-7.17532, 1.82951, 2.46233, False, True],
+ [-7.34399, 1.59931, 2.49026, False, True],
+ [-7.49641, 1.35529, 2.52589, False, True],
+ [-7.63193, 1.0986, 2.57916, False, True],
+ [-7.75016, 0.83067, 2.63521, False, True],
+ [-7.85081, 0.55298, 2.69593, False, True],
+ [-7.93374, 0.26715, 2.76438, False, True],
+ [-7.99904, -0.02516, 2.83953, False, True],
+ [-8.04703, -0.32222, 2.91711, False, True],
+ [-8.0782, -0.6224, 2.99655, False, True],
+ [-8.09317, -0.92424, 3.06828, False, True],
+ [-8.09261, -1.22658, 3.08583, False, True],
+ [-8.07669, -1.52841, 2.9889, False, True],
+ [-8.0445, -1.8286, 2.88866, False, True],
+ [-7.99507, -2.12587, 2.7921, False, True],
+ [-7.92756, -2.41871, 2.71816, False, True],
+ [-7.84151, -2.70541, 2.64451, False, True],
+ [-7.7366, -2.98412, 2.59632, False, True],
+ [-7.61305, -3.25314, 2.5542, False, True],
+ [-7.47125, -3.51087, 2.52433, False, True],
+ [-7.31186, -3.75591, 2.51021, False, True],
+ [-7.13577, -3.98716, 2.5009, False, True],
+ [-6.94391, -4.20368, 2.51583, False, True],
+ [-6.73744, -4.40495, 2.54018, False, True],
+ [-6.51752, -4.59061, 2.57489, False, True],
+ [-6.28527, -4.76051, 2.63141, False, True],
+ [-6.04188, -4.9148, 2.70919, False, True],
+ [-5.78855, -5.05385, 2.80576, False, True],
+ [-5.52641, -5.17826, 2.92836, False, True],
+ [-5.25657, -5.28878, 3.08693, False, True],
+ [-4.98013, -5.38645, 3.26653, False, False],
+ [-4.69806, -5.47231, 3.50902, False, False],
+ [-4.41131, -5.54768, 3.8213, True, False],
+ [-4.12078, -5.614, 4.0, True, False],
+ [-3.82729, -5.67279, 4.0, True, False],
+ [-3.53159, -5.72571, 4.0, True, False],
+ [-3.2343, -5.7745, 4.0, True, False],
+ [-2.93593, -5.82097, 4.0, True, False],
+ [-2.63709, -5.8669, 4.0, True, False],
+ [-2.33829, -5.91314, 4.0, True, False],
+ [-2.03954, -5.95967, 4.0, True, False]]  # replace: raceline
 
 
 # -------------------------------------------------------------------------------
@@ -1255,13 +1256,6 @@ def get_processed_racepoints(racepoints):
     return processed_racepoints
 
 
-class HistoricStep(_HistoricStep):
-    def __init__(self, framework, previous_step):
-        super().__init__(framework, previous_step)
-        self.straight_section_score = framework.straight_section_score
-        self.curved_section_score = framework.curved_section_score
-
-
 class Framework(_Framework):
     def __init__(self, params):
         super().__init__(params)
@@ -1271,13 +1265,15 @@ class Framework(_Framework):
         self.has_crashed_since_the_beginning_of_the_lap = False
         self.has_crashed_since_the_beginning_of_the_straight_section = False
         self.has_crashed_since_the_beginning_of_the_curved_section = False
+        self.straight_section_start_id = 0
+        self.curved_section_start_id = 0
 
     def process_params(self, params):
         super().process_params(params)
         self.current_position = (self.x, self.y)
-        self.optimal_position = (self.closest_racepoint.x, self.closest_racepoint.y)
-        self.closest_waypoint = self.processed_waypoints[self.closest_waypoint_id]
         self.closest_racepoint = self.racepoints[self.closest_waypoint_id]
+        self.closest_waypoint = self.processed_waypoints[self.closest_waypoint_id]
+        self.optimal_position = (self.closest_racepoint.x, self.closest_racepoint.y)
         self.prev_racepoint = self.racepoints[self.previous_waypoint_id]
         self.next_waypoint = self.processed_waypoints[self.next_waypoint_id]
         self.next_racepoint = self.racepoints[self.next_waypoint_id]
@@ -1296,9 +1292,13 @@ class Framework(_Framework):
             self.has_crashed_since_the_beginning_of_the_straight_section = True
             self.has_crashed_since_the_beginning_of_the_curved_section = True
         if self.next_racepoint.is_in_straight_section:
-            self.straight_section_score = self.speed_z_score * self.distance_z_score * self.heading_z_score
+            self.straight_section_score = (self.speed_z_score ** 2) * self.distance_z_score * self.heading_z_score
+        else:
+            self.straight_section_score = 0
         if self.next_racepoint.is_in_curved_section:
-            self.curved_section_score = self.speed_z_score * self.distance_z_score * self.heading_z_score
+            self.curved_section_score = self.speed_z_score * self.distance_z_score * (self.heading_z_score ** 2)
+        else:
+            self.curved_section_score = 0
         self._history[-1].straight_section_score = self.straight_section_score
         self._history[-1].curved_section_score = self.curved_section_score
         if len(self._history) >= 1000: # avoid memory leaks
@@ -1370,13 +1370,14 @@ class Framework(_Framework):
     @property
     def speed_z_score(self):
         # opt speed should not vary too far from what's computed for the nearest points on the racepath
-        behind = (self.closest_waypoint_id - 3)
-        ahead = (self.closest_waypoint_id + 3) % len(self.processed_waypoints)
-        speeds = self.racepoints[behind : ahead]
-        mean_speed = sum(speeds) / len(speeds) 
-        sigma_speed = sum([(speed - mean_speed)**2 for speed in speeds]) / (len(speeds) - 1)
+        # behind = (self.closest_waypoint_id - 3)
+        # ahead = (self.closest_waypoint_id + 3) % len(self.processed_waypoints)
+        # speeds = [p.opt_speed for p in self.racepoints[behind : ahead]]
+        # mean_speed = sum(speeds) / len(speeds)
+        # sigma_speed = sum([(speed - mean_speed)**2 for speed in speeds]) / (len(speeds) - 1)
+        sigma_speed = 0.33
         score = pow(
-            math.e, ((self.action_speed - self.opt_speed) ** 2) / (2 * (sigma_speed**2))
+            math.e, -((self.action_speed - self.opt_speed) ** 2) / (2 * (sigma_speed**2))
         )
         return score
 
@@ -1416,6 +1417,13 @@ class Framework(_Framework):
             left_to_curr_skew > left_right_skew or right_to_curr_skew > left_right_skew
         )
 
+    def print_debug(self):
+        super().print_debug()
+        print("waypoints  (SIZE)         ", len(self.racepoints))
+        print("previous_racepoint      ", self.prev_racepoint)
+        print("next_racepoint          ", self.next_racepoint)
+        print("closest_racepoint       ", self.closest_racepoint)
+
 
 # -------------------------------------------------------------------------------
 #
@@ -1430,6 +1438,7 @@ def reward_function(params):
         framework_global = Framework(params)
     framework_global.process_params(params)
     raw_reward = float(get_reward(framework_global))
+    framework_global.print_debug()
     if raw_reward > 0:
         return raw_reward
     else:
@@ -1504,11 +1513,11 @@ def get_reward(f: Framework):
         or r.f.is_steering_out_of_lookahead_cone
         or (
             r.f.is_steering_left
-            and get_bearing_between_points(r.f.current_position, r.f.next_racepoint) < 0
+            and get_bearing_between_points(r.f.current_position, (r.f.next_racepoint.x, r.f.next_racepoint.y)) < 0
         )
         or (
             r.f.is_steering_right
-            and get_bearing_between_points(r.f.current_position, r.f.next_racepoint) > 0
+            and get_bearing_between_points(r.f.current_position, (r.f.next_racepoint.x, r.f.next_racepoint.y)) > 0
         )
         or (
             r.f.opt_speed - r.f.action_speed > 1
