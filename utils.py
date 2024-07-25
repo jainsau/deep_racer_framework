@@ -1,23 +1,7 @@
 import math
-from collections import namedtuple
 from typing import List, Optional, Tuple
 
-Point = namedtuple("Point", ["x", "y"])
-
-ProcessedRacepoint = namedtuple(
-    "ProcessedRacepoint",
-    [
-        "idx",
-        "point",
-        "opt_speed",
-        "is_in_straight_section",
-        "is_in_curved_section",
-        "section_start_id",
-        "is_new_section",
-        "left_safe",
-        "right_safe",
-    ],
-)
+from models import Point, ProcessedRacepoint
 
 
 def calculate_distance(
@@ -191,7 +175,9 @@ def find_perpendicular_intersection(
     Finds the point where a perpendicular line drawn from a given point intersects a line defined by two endpoints.
 
     Args:
-        point (Point): The point from which the perpendicular line is drawn (x, y).
+        point (
+
+        ): The point from which the perpendicular line is drawn (x, y).
         line_start (Point): The starting point of the line (x1, y1).
         line_end (Point): The ending point of the line (x2, y2).
 
@@ -255,7 +241,7 @@ def get_processed_raceline(
     racepoints: list, track_width: float
 ) -> List[ProcessedRacepoint]:
     """Processes a list of racepoints to include additional information."""
-    car_overhang = 0.5  # Replace with the actual value from constants
+    car_overhang = 0.5  # TODO Replace with the actual value from constants
     raceline = []
 
     for i, rp in enumerate(racepoints):

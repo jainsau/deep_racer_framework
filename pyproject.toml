@@ -14,6 +14,7 @@ bpython = "^0.24"
 black = "^24.3.0"
 ruff = "^0.4.10"
 isort = "^5.13.2"
+autoflake = "^2.3.1"
 
 
 [build-system]
