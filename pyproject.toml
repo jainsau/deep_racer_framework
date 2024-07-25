@@ -2,23 +2,20 @@
 name = "deepracer"
 version = "0.1.0"
 description = ""
-authors = ["Snehil Vijay <snehilvj@outlook.com>"]
+authors = ["Your Name <you@example.com>"]
+license = "n"
+readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.12"
-numpy = "^1.23.3"
-Shapely = "^1.8.4"
-pandas = "^1.5.0"
-scipy = "^1.9.1"
-jupyter = "^1.0.0"
-matplotlib = "^3.6.0"
-black = {extras = ["jupyter"], version = "^22.8.0"}
-seaborn = "^0.12.0"
-sklearn = "^0.0"
+python = ">3.9"
+pandas = "^2.2.1"
+scikit-learn = "^1.4.1.post1"
+bpython = "^0.24"
+black = "^24.3.0"
+ruff = "^0.4.10"
+isort = "^5.13.2"
 
-[tool.poetry.dev-dependencies]
-black = "^22.8.0"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
