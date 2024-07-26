@@ -206,7 +206,7 @@ class StepMetrics:
         return rightsafe_bearing
 
     @cached_property
-    def left_right_skew(self) -> float:
+    def right_left_skew(self) -> float:
         return calculate_turn_angle(self.rightsafe_bearing, self.leftsafe_bearing)
 
     @cached_property
@@ -282,10 +282,10 @@ class StepMetrics:
     @cached_property
     def is_headed_out_of_lookahead_cone(self) -> bool:
         right_to_curr_skew = calculate_turn_angle(self.rightsafe_bearing, self.heading)
-        left_to_curr_skew = calculate_turn_angle(self.heading, self.leftsafe_bearing)
+        curr_to_left_skew = calculate_turn_angle(self.heading, self.leftsafe_bearing)
 
         return (
-            abs((right_to_curr_skew + left_to_curr_skew) - self.left_right_skew) <= 2
+            abs((right_to_curr_skew + curr_to_left_skew) - self.right_left_skew) <= 2
         )  # margin of error
 
     @cached_property
@@ -293,12 +293,12 @@ class StepMetrics:
         right_to_curr_skew = calculate_turn_angle(
             self.rightsafe_bearing, self.steering_angle
         )
-        left_to_curr_skew = calculate_turn_angle(
+        curr_to_left_skew = calculate_turn_angle(
             self.steering_angle, self.leftsafe_bearing
         )
 
         return (
-            abs((right_to_curr_skew + left_to_curr_skew) - self.left_right_skew) <= 2
+            abs((right_to_curr_skew + curr_to_left_skew) - self.right_left_skew) <= 2
         )  # margin of error
 
     @cached_property
