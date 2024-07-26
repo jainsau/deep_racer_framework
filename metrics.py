@@ -9,7 +9,7 @@ from constants import (
     STEPS_PER_SECOND,
     TINY_REWARD,
     VEHICLE_WIDTH,
-    ParamNames,
+    PARAM_NAMES,
 )
 from models import Point, ProcessedRacepoint, ProcessedWaypoint
 from utils import (
@@ -31,35 +31,28 @@ class StepMetrics:
         previous_step: Optional["StepMetrics"],
     ):
         self.all_wheels_on_track: bool = bool(
-            params.get(ParamNames["ALL_WHEELS_ON_TRACK"])
+            params.get(PARAM_NAMES["ALL_WHEELS_ON_TRACK"])
         )
-        self.x: float = float(params.get(ParamNames["X"], 0.0))
-        self.y: float = float(params.get(ParamNames["Y"], 0.0))
-        self.closest_objects: list = params.get(ParamNames["CLOSEST_OBJECTS"])
-        self.closest_waypoints: list = params.get(ParamNames["CLOSEST_WAYPOINTS"])
+        self.x: float = float(params.get(PARAM_NAMES["X"], 0.0))
+        self.y: float = float(params.get(PARAM_NAMES["Y"], 0.0))
+        self.closest_objects: list = params.get(PARAM_NAMES["CLOSEST_OBJECTS"])
+        self.closest_waypoints: list = params.get(PARAM_NAMES["CLOSEST_WAYPOINTS"])
         self.distance_from_center: float = float(
-            params.get(ParamNames["DISTANCE_FROM_CENTER"])
+            params.get(PARAM_NAMES["DISTANCE_FROM_CENTER"])
         )
-        self.heading: float = float(params.get(ParamNames["HEADING"]))
-        self.is_crashed: bool = bool(params.get(ParamNames["IS_CRASHED"]))
-        self.is_left_of_center: bool = bool(params.get(ParamNames["IS_LEFT_OF_CENTER"]))
-        self.is_offtrack: bool = bool(params.get(ParamNames["IS_OFFTRACK"]))
-        self.is_reversed: bool = bool(params.get(ParamNames["IS_REVERSED"]))
-        self.objects_distance: list = params.get(ParamNames["OBJECTS_DISTANCE"])
-        self.objects_heading: list = params.get(ParamNames["OBJECTS_HEADING"])
-        self.objects_left_of_center: list = params.get(
-            ParamNames["OBJECTS_LEFT_OF_CENTER"]
-        )
-        self.objects_location: list = params.get(ParamNames["OBJECTS_LOCATION"])
-        self.objects_speed: list = params.get(ParamNames["OBJECTS_SPEED"])
-        self.progress: float = float(params.get(ParamNames["PROGRESS"]))
-        self.speed: float = float(params.get(ParamNames["SPEED"]))
-        self.steering_angle: float = float(params.get(ParamNames["STEERING_ANGLE"]))
-        self.steps: int = int(params.get(ParamNames["STEPS"]))
-        self.track_length: float = float(params.get(ParamNames["TRACK_LENGTH"]))
-        self.track_width: float = float(params.get(ParamNames["TRACK_WIDTH"]))
+        self.heading: float = float(params.get(PARAM_NAMES["HEADING"]))
+        self.is_crashed: bool = bool(params.get(PARAM_NAMES["IS_CRASHED"]))
+        self.is_left_of_center: bool = bool(params.get(PARAM_NAMES["IS_LEFT_OF_CENTER"]))
+        self.is_offtrack: bool = bool(params.get(PARAM_NAMES["IS_OFFTRACK"]))
+        self.is_reversed: bool = bool(params.get(PARAM_NAMES["IS_REVERSED"]))
+        self.progress: float = float(params.get(PARAM_NAMES["PROGRESS"]))
+        self.speed: float = float(params.get(PARAM_NAMES["SPEED"]))
+        self.steering_angle: float = float(params.get(PARAM_NAMES["STEERING_ANGLE"]))
+        self.steps: int = int(params.get(PARAM_NAMES["STEPS"]))
+        self.track_length: float = float(params.get(PARAM_NAMES["TRACK_LENGTH"]))
+        self.track_width: float = float(params.get(PARAM_NAMES["TRACK_WIDTH"]))
         self.waypoints: List[ProcessedWaypoint] = waypoints or get_processed_waypoints(
-            params.get(ParamNames["WAYPOINTS"])
+            params.get(PARAM_NAMES["WAYPOINTS"]), self.track_width
         )
         self.raceline: List[ProcessedRacepoint] = raceline
         self.previous_step: Optional["StepMetrics"] = (

@@ -119,6 +119,8 @@ def get_section_boundaries(raceline: list, idx: int) -> tuple:
     ):  # Check if the current racepoint is the start or end of a section
         if curr_rp.is_in_straight_section or curr_rp.is_in_curved_section:
             return idx, True
+        else:
+            return idx, False
     else:
         return raceline[idx - 1].section_start_id, False
 
@@ -154,23 +156,25 @@ def get_processed_waypoints(
 
 
 def get_processed_raceline(
-    racepoints: List[List[Union[float, bool]]], track_width: float
-) -> List[ProcessedRacepoint]:
+    racepoints: List[List[Union[float, bool]]]) -> List[ProcessedRacepoint]:
     """Processes raceline to include additional information."""
     raceline = []
 
     for idx, racepoint in enumerate(racepoints):
-        section_start_id, is_new_section = get_section_boundaries(racepoints, idx)
-        raceline = ProcessedRacepoint(
+        point = ProcessedRacepoint(
             idx=idx,
-            point=Point(racepoint[0], racepoints[1]),
+            point=Point(racepoint[0], racepoint[1]),
             opt_speed=racepoint[2],
             is_in_straight_section=racepoint[3],
             is_in_curved_section=racepoint[4],
-            section_start_id=section_start_id,
-            is_new_section=is_new_section,
+            section_start_id=idx,       # placeholder
+            is_new_section=True,        # placeholder
         )
-        raceline.append(raceline)
+        raceline.append(point)
+
+    for idx, racepoint in enumerate(raceline):
+        section_start_id, is_new_section = get_section_boundaries(raceline, idx)
+        raceline[idx] = raceline[idx]._replace(section_start_id = section_start_id, is_new_section = is_new_section)
 
     return raceline
 
@@ -252,6 +256,7 @@ def get_closest_racepoints(
 ) -> List[int]:
     """Returns indices of the closest racepoints to a given position."""
 
+    print(search_start_ids)
     prev_rp_id, next_rp_id = search_start_ids
     prev_rp, next_rp = raceline[prev_rp_id], raceline[next_rp_id]
 
@@ -261,8 +266,8 @@ def get_closest_racepoints(
 
     # Calculate distances
     distances = [
-        calculate_distance(position, prev_rp),
-        calculate_distance(position, next_rp),
+        calculate_distance(position, prev_rp.point),
+        calculate_distance(position, next_rp.point),
     ]
 
     # Determine the closer racepoint and update search_start_ids accordingly
