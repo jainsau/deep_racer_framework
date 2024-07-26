@@ -152,9 +152,7 @@ class StepMetrics:
 
     @cached_property
     def closest_racepoints(self) -> List[int]:
-        return get_closest_racepoints(
-            self.position, self.closest_waypoints, self.raceline
-        )
+        return self.closest_waypoints
 
     @cached_property
     def previous_racepoint(self) -> ProcessedRacepoint:
@@ -216,7 +214,7 @@ class StepMetrics:
 
     @cached_property
     def desired_bearing(self) -> float:
-        return calculate_bearing(self.position, self.next_racepoint)
+        return calculate_bearing(self.position, self.next_racepoint.point)
 
     @cached_property
     def true_bearing(self) -> float:
@@ -226,7 +224,7 @@ class StepMetrics:
 
     @cached_property
     def track_bearing(self) -> float:
-        return calculate_bearing(self.previous_waypoint, self.next_waypoint)
+        return calculate_bearing(self.previous_waypoint.point, self.next_waypoint.point)
 
     @cached_property
     def track_skew(self) -> float:
@@ -234,7 +232,7 @@ class StepMetrics:
 
     @cached_property
     def raceline_bearing(self) -> float:
-        return calculate_bearing(self.previous_racepoint, self.next_racepoint)
+        return calculate_bearing(self.previous_racepoint.point, self.next_racepoint.point)
 
     @cached_property
     def raceline_skew(self) -> float:
@@ -251,7 +249,7 @@ class StepMetrics:
 
     @cached_property
     def has_crashed_since_the_beginning_of_the_section(self) -> Optional[bool]:
-        if not self.previous_racepoint.is_new_section:  # if not a new section
+        if self.previous_step and not self.previous_racepoint.is_new_section:  # if not a new section
             return (
                 self.previous_step.has_crashed_since_the_beginning_of_the_section
                 or self.is_crashed
