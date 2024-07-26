@@ -2,15 +2,23 @@ import math
 from functools import cached_property
 from typing import List, Optional
 
-from constants import TINY_REWARD, VEHICLE_WIDTH, ParamNames
-from models import ProcessedRacepoint
-from racelines.ace_speedway import raceline
+from constants import (
+    ANGLE_SIGMA,
+    DISTANCE_SIGMA,
+    SPEED_SIGMA,
+    STEPS_PER_SECOND,
+    TINY_REWARD,
+    VEHICLE_WIDTH,
+    ParamNames,
+)
+from models import Point, ProcessedRacepoint, ProcessedWaypoint
 from utils import (
     calculate_bearing,
     calculate_distance,
     calculate_turn_angle,
-    find_perpendicular_intersection,
-    is_point_approximately_between,
+    find_point_projection_on_the_line_between,
+    get_closest_racepoints,
+    get_processed_waypoints,
 )
 
 
@@ -19,6 +27,7 @@ class StepMetrics:
         self,
         params: dict,
         raceline: List[ProcessedRacepoint],
+        waypoints: List[List[ProcessedWaypoint]],
         previous_step: Optional["StepMetrics"],
     ):
         self.all_wheels_on_track: bool = bool(
@@ -49,9 +58,17 @@ class StepMetrics:
         self.steps: int = int(params.get(ParamNames["STEPS"]))
         self.track_length: float = float(params.get(ParamNames["TRACK_LENGTH"]))
         self.track_width: float = float(params.get(ParamNames["TRACK_WIDTH"]))
-        self.waypoints: List[List[float]] = params.get(ParamNames["WAYPOINTS"])
+        self.waypoints: List[ProcessedWaypoint] = waypoints or get_processed_waypoints(
+            params.get(ParamNames["WAYPOINTS"])
+        )
         self.raceline: List[ProcessedRacepoint] = raceline
-        self.previous_step: Optional["StepMetrics"] = previous_step
+        self.previous_step: Optional["StepMetrics"] = (
+            previous_step  # is None for new laps
+        )
+
+    @cached_property
+    def position(self) -> tuple:
+        return Point(x=self.x, y=self.y)
 
     @cached_property
     def is_lap_new(self) -> bool:
@@ -93,9 +110,7 @@ class StepMetrics:
     @cached_property
     def step_distance(self) -> float:
         if self.previous_step:
-            return calculate_distance(
-                (self, previous_step.x, self.previous_step.y), (self.x, self.y)
-            )
+            return calculate_distance(self.previous_step.position, self.position)
         return 0.0
 
     @cached_property
@@ -115,27 +130,27 @@ class StepMetrics:
         return 0.0
 
     @cached_property
-    def previous_waypoint(self) -> List[float]:
+    def previous_waypoint(self) -> ProcessedWaypoint:
         return self.waypoints[int(self.closest_waypoints[0])]
 
     @cached_property
-    def next_waypoint(self) -> List[float]:
+    def next_waypoint(self) -> ProcessedWaypoint:
         return self.waypoints[int(self.closest_waypoints[1])]
 
     @cached_property
     def distance_to_prev_waypoint(self) -> float:
-        return calculate_distance((self.x, self.y), self.previous_waypoint)
+        return calculate_distance(self.position, self.previous_waypoint.point)
 
     @cached_property
     def distance_to_next_waypoint(self) -> float:
-        return calculate_distance((self.x, self.y), self.next_waypoint)
+        return calculate_distance(self.position, self.next_waypoint.point)
 
     @cached_property
     def distance_from_closest_waypoint(self) -> float:
         return min(self.distance_to_prev_waypoint, self.distance_to_next_waypoint)
 
     @cached_property
-    def closest_waypoint(self) -> int:
+    def closest_waypoint(self) -> List[ProcessedWaypoint]:
         return (
             self.previous_waypoint
             if self.distance_to_prev_waypoint < self.distance_to_next_waypoint
@@ -144,24 +159,25 @@ class StepMetrics:
 
     @cached_property
     def closest_racepoints(self) -> List[int]:
-        # TODO replace dummy code
-        return [0, 1]
+        return get_closest_racepoints(
+            self.position, self.closest_waypoints, self.raceline
+        )
 
     @cached_property
     def previous_racepoint(self) -> ProcessedRacepoint:
-        return self.raceline[int(self.closest_racepoints[0])]
+        return self.raceline[self.closest_racepoints[0]]
 
     @cached_property
     def next_racepoint(self) -> ProcessedRacepoint:
-        return self.raceline[int(self.closest_racepoints[1])]
+        return self.raceline[self.closest_racepoints[1]]
 
     @cached_property
     def distance_to_prev_racepoint(self) -> float:
-        return calculate_distance((self.x, self.y), self.previous_racepoint.point)
+        return calculate_distance(self.position, self.previous_racepoint.point)
 
     @cached_property
     def distance_to_next_racepoint(self) -> float:
-        return calculate_distance((self.x, self.y), self.next_racepoint.point)
+        return calculate_distance(self.position, self.next_racepoint.point)
 
     @cached_property
     def distance_from_closest_racepoint(self) -> float:
@@ -178,20 +194,20 @@ class StepMetrics:
     @cached_property
     def leftsafe_bearing(self):
         leftsafe_bearing = calculate_bearing(
-            self.current_position, self.next_racepoint.left_safe
+            self.position, self.next_waypoint.left_safe
         )
         return leftsafe_bearing
 
     @cached_property
     def rightsafe_bearing(self):
         rightsafe_bearing = calculate_bearing(
-            self.current_position, self.next_racepoint.right_safe
+            self.position, self.next_waypoint.right_safe
         )
         return rightsafe_bearing
 
     @cached_property
     def left_right_skew(self) -> float:
-        return abs(calculate_turn_angle(self.leftsafe_bearing, self.rightsafe_bearing))
+        return calculate_turn_angle(self.rightsafe_bearing, self.leftsafe_bearing)
 
     @cached_property
     def is_steering_straight(self) -> bool:
@@ -207,14 +223,12 @@ class StepMetrics:
 
     @cached_property
     def desired_bearing(self) -> float:
-        return calculate_bearing((self.x, self.y), self.next_racepoint)
+        return calculate_bearing(self.position, self.next_racepoint)
 
     @cached_property
     def true_bearing(self) -> float:
         if self.previous_step:
-            return calculate_bearing(
-                (self.previous_step.x, self.previous_step.y), (self.x, self.y)
-            )
+            return calculate_bearing(self.previous_step.position, self.position)
         return self.heading
 
     @cached_property
@@ -222,20 +236,20 @@ class StepMetrics:
         return calculate_bearing(self.previous_waypoint, self.next_waypoint)
 
     @cached_property
-    def skew(self) -> float:
+    def track_skew(self) -> float:
         return calculate_turn_angle(self.true_bearing, self.track_bearing)
 
     @cached_property
-    def racetrack_bearing(self) -> float:
+    def raceline_bearing(self) -> float:
         return calculate_bearing(self.previous_racepoint, self.next_racepoint)
 
     @cached_property
-    def racetrack_skew(self) -> float:
-        return calculate_turn_angle(self.true_bearing, self.racetrack_bearing)
+    def raceline_skew(self) -> float:
+        return calculate_turn_angle(self.true_bearing, self.raceline_bearing)
 
     @cached_property
     def has_crashed_since_the_beginning_of_the_lap(self) -> bool:
-        if self.previous_step:
+        if self.previous_step:  # if not a new lap
             return (
                 self.previous_step.has_crashed_since_the_beginning_of_the_lap
                 or self.is_crashed
@@ -243,66 +257,49 @@ class StepMetrics:
         return self.is_crashed
 
     @cached_property
+    def has_crashed_since_the_beginning_of_the_section(self) -> Optional[bool]:
+        if not self.previous_racepoint.is_new_section:  # if not a new section
+            return (
+                self.previous_step.has_crashed_since_the_beginning_of_the_section
+                or self.is_crashed
+            )
+        return self.is_crashed
+
+    @cached_property
     def is_in_straight_section(self) -> bool:
-        return self.previous_racepoint.is_in_straight_section
-
-    @cached_property
-    def straight_section_start_id(self) -> int:
-        return self.previous_racepoint.section_start_id
-
-    @cached_property
-    def has_crashed_since_the_beginning_of_the_straight_section(self) -> bool:
-        if self.previous_racepoint.is_new_section:
-            return self.is_crashed
         return (
-            self.previous_step.has_crashed_since_the_beginning_of_the_straight_section
-            or self.is_crashed
+            self.previous_racepoint.is_in_straight_section
+            and self.next_racepoint.is_in_straight_section
         )
 
     @cached_property
     def is_in_curved_section(self) -> bool:
-        return self.previous_racepoint.is_in_curved_section
-
-    @cached_property
-    def curved_section_start_id(self) -> int:
-        return self.previous_racepoint.section_start_id
-
-    @cached_property
-    def has_crashed_since_the_beginning_of_the_curved_section(self) -> bool:
-        if self.previous_racepoint.is_new_section:
-            return self.is_crashed
         return (
-            self.previous_step.has_crashed_since_the_beginning_of_the_curved_section
-            or self.is_crashed
+            self.previous_racepoint.is_in_curved_section
+            and self.next_racepoint.is_in_curved_section
         )
 
     @cached_property
     def is_headed_out_of_lookahead_cone(self) -> bool:
-        left_to_curr_skew = abs(
-            calculate_turn_angle(self.leftsafe_bearing, self.heading)
-        )
-        right_to_curr_skew = abs(
-            calculate_turn_angle(self.heading, self.rightsafe_bearing)
-        )
+        right_to_curr_skew = calculate_turn_angle(self.rightsafe_bearing, self.heading)
+        left_to_curr_skew = calculate_turn_angle(self.heading, self.leftsafe_bearing)
 
         return (
-            left_to_curr_skew > self.left_right_skew
-            or right_to_curr_skew > self.left_right_skew
-        )
+            abs((right_to_curr_skew + left_to_curr_skew) - self.left_right_skew) <= 2
+        )  # margin of error
 
     @cached_property
     def is_steering_out_of_lookahead_cone(self) -> bool:
-        left_to_curr_skew = abs(
-            calculate_turn_angle(self.leftsafe_bearing, self.steering_angle)
+        right_to_curr_skew = calculate_turn_angle(
+            self.rightsafe_bearing, self.steering_angle
         )
-        right_to_curr_skew = abs(
-            calculate_turn_angle(self.rightsafe_bearing, self.steering_angle)
+        left_to_curr_skew = calculate_turn_angle(
+            self.steering_angle, self.leftsafe_bearing
         )
 
         return (
-            left_to_curr_skew > self.left_right_skew
-            or right_to_curr_skew > self.left_right_skew
-        )
+            abs((right_to_curr_skew + left_to_curr_skew) - self.left_right_skew) <= 2
+        )  # margin of error
 
     @cached_property
     def opt_speed(self) -> float:
@@ -310,45 +307,32 @@ class StepMetrics:
 
     @cached_property
     def opt_position(self) -> tuple:
-        return find_perpendicular_intersection(
-            (self.x, self.y),
+        return find_point_projection_on_the_line_between(
+            self.position,
             self.previous_racepoint.point,
             self.next_racepoint.point,
         )
 
     @cached_property
     def heading_z_score(self) -> float:
-        sigma = 10
-        reward = pow(math.e, -((self.racetrack_skew**2) / (2 * (sigma**2))))
+        reward = pow(math.e, -((self.raceline_skew**2) / (2 * (ANGLE_SIGMA**2))))
         return reward
 
     @cached_property
     def distance_z_score(self) -> float:
-        # TODO: clean-up
-        left_edge = self.closest_racepoint.left_safe
-        right_edge = self.closest_racepoint.right_safe
-        if is_point_approximately_between(
-            self.current_position, left_edge, self.opt_position
-        ):
-            sigma = calculate_distance(left_edge, self.opt_position) / 3
-        else:
-            sigma = calculate_distance(self.opt_position, right_edge) / 3
-
         reward = pow(
             math.e,
             -(
-                (calculate_distance(self.current_position, self.opt_position) ** 2)
-                / (2 * (sigma**2))
+                (calculate_distance(self.position, self.opt_position) ** 2)
+                / (2 * (DISTANCE_SIGMA**2))
             ),
         )
-
         return reward
 
     @cached_property
     def speed_z_score(self) -> float:
-        sigma_speed = 0.33
         score = pow(
-            math.e, -((self.speed - self.opt_speed) ** 2) / (2 * (sigma_speed**2))
+            math.e, -((self.speed - self.opt_speed) ** 2) / (2 * (SPEED_SIGMA**2))
         )
         return score
 
@@ -375,12 +359,9 @@ class StepMetrics:
     def _calculate_straight_section_bonus(self) -> float:
         bonus = self.straight_section_score
         prev = self.previous_step
-        while prev:
-            if prev.is_in_straight_section:
-                bonus += prev.straight_section_score
-                prev = prev.previous_step
-            else:
-                break
+        while prev and prev.is_in_straight_section:
+            bonus += prev.straight_section_score
+            prev = prev.previous_step
         return bonus
 
     @cached_property
@@ -388,7 +369,7 @@ class StepMetrics:
         if (
             self.previous_racepoint.is_in_straight_section
             and not self.next_racepoint.is_in_straight_section
-            and not self.has_crashed_since_the_beginning_of_the_straight_section
+            and not self.has_crashed_since_the_beginning_of_the_section
         ):
             bonus = self._calculate_straight_section_bonus()
             return bonus
@@ -397,12 +378,9 @@ class StepMetrics:
     def _calculate_curved_section_bonus(self) -> float:
         bonus = self.curved_section_score
         prev = self.previous_step
-        while prev:
-            if prev.is_in_curved_section:
-                bonus += prev.curved_section_score
-                prev = prev.previous_step
-            else:
-                break
+        while prev and prev.is_in_curved_section:
+            bonus += prev.curved_section_score
+            prev = prev.previous_step
         return bonus
 
     @cached_property
@@ -410,14 +388,14 @@ class StepMetrics:
         if (
             self.previous_racepoint.is_in_curved_section
             and not self.next_racepoint.is_in_curved_section
-            and not self.has_crashed_since_the_beginning_of_the_curved_section
+            and not self.has_crashed_since_the_beginning_of_the_section
         ):
             return self._calculate_curved_section_bonus()
         return 0.0
 
     @cached_property
     def track_completion_bonus(self) -> float:
-        if self.is_lap_complete and self.has_crashed_since_the_beginning_of_the_lap:
+        if self.is_lap_complete and not self.has_crashed_since_the_beginning_of_the_lap:
             return 100.0
         return 0.0
 
@@ -425,7 +403,7 @@ class StepMetrics:
     def took_unpardonable_action(self) -> bool:
         if (
             self.is_offtrack
-            or self.racetrack_skew > 30
+            or self.raceline_skew > 30
             or self.is_headed_out_of_lookahead_cone
             or self.is_steering_out_of_lookahead_cone
             or (self.is_steering_left and self.desired_bearing < 0)

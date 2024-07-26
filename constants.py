@@ -1,8 +1,19 @@
-VEHICLE_LENGTH: float = 0.365
-VEHICLE_WIDTH: float = 0.225
+from enum import Enum
+
+VEHICLE_LENGTH: float = 0.30
+VEHICLE_WIDTH: float = 0.15
+CAR_OVERHANG = 0.5  # Max 50% of the car width can hang outside the track
+DISTANCE_SIGMA = 0.1
+SPEED_SIGMA = 0.4
+ANGLE_SIGMA = 10
 STEPS_PER_SECOND: int = 15
 TINY_REWARD: float = 1e-4
 EDGE_ERROR_TOLERANCE: float = 0.01
+
+
+class OFFSET(Enum):
+    LEFT = 90
+    RIGHT = -90
 
 
 PARAM_NAMES = {
